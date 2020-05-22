@@ -31,6 +31,8 @@
 	const designingForm = isPage('/sitecore/client/Applications/FormsBuilder/Pages/FormDesigner');
 	const loginScreen = isPage('/sitecore/login') || isPage('/Account/Login');
 	const contentEditor = isPage('/sitecore/shell/Applications/Content%20Editor.aspx');
+	var search = getSearch();
+	var globalLogo;
 
 	function init() {
 		globalLogo = headerInfo.detectGlobalLogo();
@@ -71,11 +73,10 @@
 				exmObserver.observe(exmPanel, {attributes:false, childList: true, subtree: true});
 			}
 		}
+		if (formsEditor) {
+			formsContentEditorLinks.init();
+		}
 	}
-
-	var formDetailObserver = new MutationObserver(openInContentEditor);
-	var search = getSearch();
-	var globalLogo;
 
 	var recognizedDomain = new (function() {
 		let registeredDomains = JSON.parse(GM_getValue('RegisteredDomains', '[]'));
@@ -563,105 +564,105 @@
 		}
 	})();
 
-	init();
-
-	var lastResponse = [];
-	if (formsEditor) {
-		// listen in on every XHR to see if it returns details we need for the Content Editor link
-		(function(open) {
-			XMLHttpRequest.prototype.open = function() {
-				this.addEventListener("readystatechange", function() {
-					if (this.readyState != 4
-						|| (!designingForm && (this.responseURL.indexOf('/sitecore/api/ssc/forms/formdesign/formdesign/details?formId=') == -1 || !hasJsonStructure(this.responseText)))
-						|| (designingForm && this.responseURL.indexOf('/sitecore/api/ssc/forms/formdesign/formdesign/save?sc_formmode=new') == -1)) {
-						return;
-					}
-					let response = JSON.parse(this.responseText);
-					if (!designingForm && response.length == 0) {
-						lastResponse = [{
-							formId: decodeURIComponent(this.responseURL.split(/\?|&/).filter(q => q.indexOf('formId=') > -1)[0].split('=')[1]),
-							id: '',
-							name: '_unfindable',
-							path: '_unfindable'
-						}];
-						return;
-					}
-					if (designingForm) {
-						addFormPencil(response, decodeURIComponent(this.responseURL.split(/\?|&/).filter(q => q.indexOf('sc_formlang=') > -1)[0].split('=')[1]));
-						return;
-					}
-					// this is the information we need, keep it in a global variable that openInContentEditor() reads
-					lastResponse = response;
-				}, false);
-				open.apply(this, arguments);
-			};
-		})(XMLHttpRequest.prototype.open);
-		let contextPane = document.querySelector('aside.sc-flx-context-pane');
-		if (contextPane) {
-			formDetailObserver.observe(contextPane, {attributes:false, childList: true, subtree: true});
-		}
-	}
-
-	function openInContentEditor(mutationList) {
-		if (!lastResponse.length) {
-			return;
-		}
-		for (let i = 0; i < lastResponse.length; i++) {
-			formDetailObserver.disconnect();
-			let query = {};
-			let langLabel = document.querySelector('.sc-listcontrol-icon.selected .sc-listcontrol-icon-description-row2');
-			if (langLabel) {
-				query['langTo'] = langLabel.innerText;
+	var formsContentEditorLinks = new (function() {
+		let lastResponse = [];
+		this.init = function() {
+			// listen in on every XHR to see if it returns details we need for the Content Editor link
+			(function(open) {
+				XMLHttpRequest.prototype.open = function() {
+					this.addEventListener("readystatechange", function() {
+						if (this.readyState != 4
+							|| (!designingForm && (this.responseURL.indexOf('/sitecore/api/ssc/forms/formdesign/formdesign/details?formId=') == -1 || !hasJsonStructure(this.responseText)))
+							|| (designingForm && this.responseURL.indexOf('/sitecore/api/ssc/forms/formdesign/formdesign/save?sc_formmode=new') == -1)) {
+							return;
+						}
+						let response = JSON.parse(this.responseText);
+						if (!designingForm && response.length == 0) {
+							lastResponse = [{
+								formId: decodeURIComponent(this.responseURL.split(/\?|&/).filter(q => q.indexOf('formId=') > -1)[0].split('=')[1]),
+								id: '',
+								name: '_unfindable',
+								path: '_unfindable'
+							}];
+							return;
+						}
+						if (designingForm) {
+							addFormPencil(response, decodeURIComponent(this.responseURL.split(/\?|&/).filter(q => q.indexOf('sc_formlang=') > -1)[0].split('=')[1]));
+							return;
+						}
+						// this is the information we need, keep it in a global variable that openInContentEditor() reads
+						lastResponse = response;
+					}, false);
+					open.apply(this, arguments);
+				};
+			})(XMLHttpRequest.prototype.open);
+			let contextPane = document.querySelector('aside.sc-flx-context-pane');
+			if (contextPane) {
+				formDetailObserver.observe(contextPane, {attributes:false, childList: true, subtree: true});
 			}
-			if (i == 0) {
-				query['guidTo'] = lastResponse[i].formId;
-				let pathSpan = q('[data-sc-id="LocationValue"]')[0];
-				let pathParent = pathSpan.parentNode;
-				let oldLink = document.getElementById('formIdLink');
-				if (oldLink) {
-					pathParent.removeChild(oldLink);
-				} else {
-					pathParent.style.position = 'relative';
+			if (designingForm && search.formId) {
+				addFormPencil(search.formId, search.lang);
+			}
+		}
+		let formDetailObserver = new MutationObserver(openInContentEditor);
+		function openInContentEditor(mutationList) {
+			if (!lastResponse.length) {
+				return;
+			}
+			for (let i = 0; i < lastResponse.length; i++) {
+				formDetailObserver.disconnect();
+				let query = {};
+				let langLabel = document.querySelector('.sc-listcontrol-icon.selected .sc-listcontrol-icon-description-row2');
+				if (langLabel) {
+					query['langTo'] = langLabel.innerText;
 				}
-				var a = document.createElement('a');
-					a.id = 'formIdLink';
-					a.innerHTML = '<img src="/temp/iconcache/apps/16x16/pencil.png" />';
+				if (i == 0) {
+					query['guidTo'] = lastResponse[i].formId;
+					let pathSpan = q('[data-sc-id="LocationValue"]')[0];
+					let pathParent = pathSpan.parentNode;
+					let oldLink = document.getElementById('formIdLink');
+					if (oldLink) {
+						pathParent.removeChild(oldLink);
+					} else {
+						pathParent.style.position = 'relative';
+					}
+					var a = document.createElement('a');
+						a.id = 'formIdLink';
+						a.innerHTML = '<img src="/temp/iconcache/apps/16x16/pencil.png" />';
+						a.setAttribute('href', `/sitecore/shell/Applications/Content%20Editor.aspx?sc_bw=1&${generateUrlQuery(query)}`);
+						a.onclick = function(e) { e.stopPropagation(); };
+						a.setAttribute('title', `Open [${pathSpan.innerText.trim()}/${q('.sc-listcontrol-icon.selected .sc-listcontrol-icon-description a')[0].title}] in the Content Editor`);
+						a.style.position = 'absolute';
+						a.style.left = '-1em';
+					pathParent.prepend(a);
+				}
+				let par = searchMutationListFor(mutationList, 'p[title="'+lastResponse[i].name+' '+lastResponse[i].path+'"]');
+				if (!par) {
+					continue;
+				}
+				query['guidTo'] = lastResponse[i].id;
+				a = a.cloneNode(true);
 					a.setAttribute('href', `/sitecore/shell/Applications/Content%20Editor.aspx?sc_bw=1&${generateUrlQuery(query)}`);
-					a.onclick = function(e) { e.stopPropagation(); };
-					a.setAttribute('title', `Open [${pathSpan.innerText.trim()}/${q('.sc-listcontrol-icon.selected .sc-listcontrol-icon-description a')[0].title}] in the Content Editor`);
-					a.style.position = 'absolute';
-					a.style.left = '-1em';
-				pathParent.prepend(a);
+					a.setAttribute('title', `Open [${lastResponse[i].path}] in the Content Editor`);
+					a.style.left = '';
+					a.style.right = '6em';
+				par[0].appendChild(a);
 			}
-			let par = searchMutationListFor(mutationList, 'p[title="'+lastResponse[i].name+' '+lastResponse[i].path+'"]');
-			if (!par) {
-				continue;
-			}
-			query['guidTo'] = lastResponse[i].id;
-			a = a.cloneNode(true);
-				a.setAttribute('href', `/sitecore/shell/Applications/Content%20Editor.aspx?sc_bw=1&${generateUrlQuery(query)}`);
-				a.setAttribute('title', `Open [${lastResponse[i].path}] in the Content Editor`);
-				a.style.left = '';
-				a.style.right = '6em';
-			par[0].appendChild(a);
+			formDetailObserver.observe(document.querySelector('div[data-sc-id=LinksListControl] .sc-listcontrol-content'), {attributes:false, childList: true, subtree: true});
 		}
-		formDetailObserver.observe(document.querySelector('div[data-sc-id=LinksListControl] .sc-listcontrol-content'), {attributes:false, childList: true, subtree: true});
-	}
+		function addFormPencil(guid, lang) {
+			let a = document.createElement('a');
+				a.innerHTML = '<img src="/temp/iconcache/apps/32x32/pencil.png" />';
+				a.setAttribute('href', `/sitecore/shell/Applications/Content%20Editor.aspx?sc_bw=1&${generateUrlQuery({
+					'guidTo' : guid,
+					'langTo' : lang
+				})}`);
+				a.setAttribute('title', 'Open this form as item in the Content Editor');
+			q('.sc-applicationHeader-title')[0].appendChild(a);
+		}
+	})();
 
-	if (designingForm && search.formId) {
-		addFormPencil(search.formId, search.lang);
-	}
-
-	function addFormPencil(guid, lang) {
-		let a = document.createElement('a');
-			a.innerHTML = '<img src="/temp/iconcache/apps/32x32/pencil.png" />';
-			a.setAttribute('href', `/sitecore/shell/Applications/Content%20Editor.aspx?sc_bw=1&${generateUrlQuery({
-				'guidTo' : guid,
-				'langTo' : lang
-			})}`);
-			a.setAttribute('title', 'Open this form as item in the Content Editor');
-		q('.sc-applicationHeader-title')[0].appendChild(a);
-	}
+	init();
 
 	// Helper functions
 	function searchMutationListFor(mutationList, query) {
