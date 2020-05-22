@@ -46,7 +46,7 @@
 		let envName, envColor;
 		[envName, envColor] = recognizedDomain.init();
 		headerInfo.repaint(globalLogo, envName, envColor);
-		if (contentEditor) {
+		if (contentEditor || formsEditor) {
 			languageInfo.init();
 		}
 		if (launchPad) {
@@ -64,72 +64,72 @@
 	var search = getSearch();
 	var globalLogo;
 
-	var recognizedDomain = {
-		registeredDomains : JSON.parse(GM_getValue('RegisteredDomains', '[]')),
-		domainSettings : false,
-		menuCommand : null,
-		init : function() {
-			let domIndex = this.registeredDomains.findIndex(d => new RegExp(d.regex).test(location.host));
+	var recognizedDomain = new (function() {
+		let registeredDomains = JSON.parse(GM_getValue('RegisteredDomains', '[]'));
+		let domainSettings = false;
+		let menuCommand = null;
+		this.init = function() {
+			let domIndex = registeredDomains.findIndex(d => new RegExp(d.regex).test(location.host));
 			if (domIndex > -1) {
-				this.domainSettings = this.registeredDomains[domIndex];
+				domainSettings = registeredDomains[domIndex];
 			}
-			if (!this.domainSettings) {
-				this.menuCommand = GM_registerMenuCommand("Register domain with user-script", this.showRegForm, "r");
+			if (!domainSettings) {
+				menuCommand = GM_registerMenuCommand("Register domain with user-script", showRegForm, "r");
 				return ['', ''];
 			} else {
-				this.menuCommand = GM_registerMenuCommand("Forget this domain", this.forgetDomain, "f");
-				return [this.domainSettings.friendly, this.domainSettings.color];
+				menuCommand = GM_registerMenuCommand("Forget this domain", forgetDomain, "f");
+				return [domainSettings.friendly, domainSettings.color];
 			}
-		},
-		showRegForm : function() {
+		}
+		function showRegForm() {
 			let ul = document.querySelector('ul.sc-accountInformation');
 			if (!ul) { return; }
 			let li = ul.querySelector('li');
 
-			recognizedDomain.addRegFormElement(ul, li, `<input type="text" id="domainRegex" placeholder="Domain regex" title="The regex to recognize this domain/environment" value="^${location.host.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}$" style="display: inline-block;max-width: 80%; line-height: initial; color: #000;">`);
-			recognizedDomain.addRegFormElement(ul, li, `<input type="text" id="domainFriendlyName" placeholder="Friendly name" title="Friendly name for this domain, will be placed in header and title" style="display: inline-block;width: 80%; line-height: initial; color: #000;">`);
-			recognizedDomain.addRegFormElement(ul, li, `<input type="color" id="domainColor" title="Color to give the header on this domain" value="#2b2b2b">`);
-			recognizedDomain.addRegFormElement(ul, li, `<button type="button" style="line-height: initial; color: #000;">Save</button>`);
+			addRegFormElement(ul, li, `<input type="text" id="domainRegex" placeholder="Domain regex" title="The regex to recognize this domain/environment" value="^${location.host.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}$" style="display: inline-block;max-width: 80%; line-height: initial; color: #000;">`);
+			addRegFormElement(ul, li, `<input type="text" id="domainFriendlyName" placeholder="Friendly name" title="Friendly name for this domain, will be placed in header and title" style="display: inline-block;width: 80%; line-height: initial; color: #000;">`);
+			addRegFormElement(ul, li, `<input type="color" id="domainColor" title="Color to give the header on this domain" value="#2b2b2b">`);
+			addRegFormElement(ul, li, `<button type="button" style="line-height: initial; color: #000;">Save</button>`);
 
 			ul.querySelector('button').onclick = function() {
-				recognizedDomain.domainSettings = {
+				domainSettings = {
 					regex : ul.querySelector('#domainRegex').value,
 					friendly : ul.querySelector('#domainFriendlyName').value,
 					color : ul.querySelector('#domainColor').value
 				};
 
-				recognizedDomain.registeredDomains.push(recognizedDomain.domainSettings);
-				GM_setValue('RegisteredDomains', JSON.stringify(recognizedDomain.registeredDomains));
+				registeredDomains.push(domainSettings);
+				GM_setValue('RegisteredDomains', JSON.stringify(registeredDomains));
 
 				let formElements = q('ul.sc-accountInformation li.form-element');
 				for (let i = 0; i < formElements.length; i++) {
 					ul.removeChild(formElements[i]);
 				}
 
-				GM_unregisterMenuCommand(recognizedDomain.menuCommand);
+				GM_unregisterMenuCommand(menuCommand);
 			}
-		},
-		addRegFormElement : function(ul, li, newHtml) {
+		}
+		function addRegFormElement(ul, li, newHtml) {
 			let newLi = document.createElement('li');
 				newLi.className = 'form-element';
 				newLi.innerHTML = newHtml;
 			ul.insertBefore(newLi, li);
-		},
-		forgetDomain : function() {
-			recognizedDomain.registeredDomains = JSON.parse(GM_getValue('RegisteredDomains', '[]'));
-			let i = recognizedDomain.registeredDomains.findIndex(d => new RegExp(d.regex).test(location.host));
-			if (i > -1 && confirm(`Are you sure you want forget this ${recognizedDomain.registeredDomains[i].friendly} domain?\n\n(matched: ${recognizedDomain.registeredDomains[i].regex})`)) {
-				recognizedDomain.registeredDomains.splice(i, 1);
-				GM_setValue('RegisteredDomains', JSON.stringify(recognizedDomain.registeredDomains));
-				GM_unregisterMenuCommand(recognizedDomain.menuCommand);
-				recognizedDomain.domainSettings = false;
+		}
+		function forgetDomain() {
+			registeredDomains = JSON.parse(GM_getValue('RegisteredDomains', '[]'));
+			let i = registeredDomains.findIndex(d => new RegExp(d.regex).test(location.host));
+			if (i > -1 && confirm(`Are you sure you want forget this ${registeredDomains[i].friendly} domain?\n\n(matched: ${registeredDomains[i].regex})`)) {
+				registeredDomains.splice(i, 1);
+				GM_setValue('RegisteredDomains', JSON.stringify(registeredDomains));
+				GM_unregisterMenuCommand(menuCommand);
+				domainSettings = false;
 			}
 		}
-	};
+	})();
 
-	var headerInfo = {
-		detectGlobalLogo : () => document.querySelector('#globalLogo, .sc-global-logo, .global-logo:not([style]), .logo-wrap img'),
-		repaint : function(globalLogo, envName, envColor) {
+	var headerInfo = new (function() {
+		this.detectGlobalLogo = () => document.querySelector('#globalLogo, .sc-global-logo, .global-logo:not([style]), .logo-wrap img'),
+		this.repaint = function(globalLogo, envName, envColor) {
 			let logoContainer = globalLogo.parentElement;
 			let col = logoContainer.parentElement;
 			// add number to envName
@@ -207,10 +207,10 @@
 				col.nextElementSibling.className = 'col-xs-6';
 			}
 		}
-	};
+	})();
 
-	var languageInfo = {
-		init : function() {
+	var languageInfo = new (function() {
+		this.init = function() {
 			let rightCol = document.querySelector('.sc-globalHeader-loginInfo').parentElement;
 				rightCol.style.height = '50px';
 				rightCol.style.backgroundSize = '75px 100%';
@@ -221,14 +221,14 @@
 				document.getElementById('showLang').innerHTML = curLang;
 				rightCol.style.backgroundImage = flags[curLang];
 				// observe to update language and flag
-				this.langHiddenObserver.observe(document.getElementById('scLanguage'), {attributes: true, childList: false, subtree: false});
+				langHiddenObserver.observe(document.getElementById('scLanguage'), {attributes: true, childList: false, subtree: false});
 			} else {
 				// observe to update language and flag
-				this.langHiddenObserver.observe(document.querySelector('div[data-sc-id=LanguageListControl] .sc-listcontrol-content'), {attributes:true, childList: false, subtree: true});
+				langHiddenObserver.observe(document.querySelector('div[data-sc-id=LanguageListControl] .sc-listcontrol-content'), {attributes:true, childList: false, subtree: true});
 			}
-		},
-		langHiddenObserver : null, // new MutationObserver(languageInfo.updateShownLang),
-		updateShownLang : function(mutationList) {
+		}
+		let langHiddenObserver = new MutationObserver(updateShownLang);
+		function updateShownLang(mutationList) {
 			let curLang;
 			if (contentEditor && mutationList.filter(ml => ml.attributeName == 'value').length) {
 				curLang = document.getElementById('scLanguage').value;
@@ -247,18 +247,17 @@
 			let rightCol = document.querySelector('.sc-globalHeader-loginInfo').parentElement;
 				rightCol.style.backgroundImage = flags[curLang];
 		}
-	};
-	languageInfo.langHiddenObserver = new MutationObserver(languageInfo.updateShownLang);
+	})();
 
-	var continueFeature = {
-		getButtons : function(dbName) {
+	var continueFeature = new (function() {
+		this.getButtons = function(dbName) {
 			if (dbName == '' || exm) {
 				return false;
 			}
 			let switchTo1 = dbName == 'master' ? 'core' : 'master';
 			let continueQuery = '';
 			if (!desktop) {
-				continueQuery = this.cleanHref(location.href.split(location.host)[1], true,
+				continueQuery = cleanHref(location.href.split(location.host)[1], true,
 					'continueTo', 'expandTo', 'scrollTo', 'clickTo', 'langTo', 'guidTo');
 				continueQuery = '&' + generateUrlQuery({ 'continueTo' : continueQuery });
 			}
@@ -271,7 +270,7 @@
 				dbSwitch1.style.marginRight = '.5em';
 			if (contentEditor && switchTo1 != 'core' && dbName != 'core') {
 				dbSwitch1.onclick = function() {
-					continueFeature.setLinkHref(dbSwitch1);
+					setLinkHref(dbSwitch1);
 				}
 			}
 			let switchTo2 = dbName == 'web' ? 'core' : 'web';
@@ -283,13 +282,13 @@
 				dbSwitch2.style.fontSize = '1.5em';
 			if (contentEditor && switchTo2 != 'core' && dbName != 'core') {
 				dbSwitch2.onclick = function() {
-					continueFeature.setLinkHref(dbSwitch2);
+					setLinkHref(dbSwitch2);
 				}
 			}
 			return [dbSwitch1, dbSwitch2];
-		},
-		setLinkHref : function(link) {
-			let continueQuery = this.cleanHref(link.href, true,
+		}
+		function setLinkHref(link) {
+			let continueQuery = cleanHref(link.href, true,
 				'expandTo', 'scrollTo', 'clickTo', 'langTo', 'guidTo');
 			let ids = [];
 			q('img[src*=treemenu_expanded][id]').forEach(i => ids.push(i.id));
@@ -300,8 +299,8 @@
 				'langTo' : document.querySelector('#scLanguage').value
 			});
 			link.href = continueQuery;
-		},
-		cleanHref : function(href, removeAnker, ...paramNames) {
+		}
+		function cleanHref(href, removeAnker, ...paramNames) {
 			if (removeAnker) {
 				href = href.replace(/#.*/, '');
 			}
@@ -309,9 +308,9 @@
 				href = href.replace(new RegExp(`[?&]${paramNames[p]}=[^?&#]*`), '');
 			}
 			return href;
-		},
-		expandItemIds : [],
-		init : function () {
+		}
+		let expandItemIds = [];
+		this.init = function () {
 			if (desktop && search.continueTo) {
 				// we arrived at the desktop to switch databases and continue where we were
 				let continueTo = search.continueTo;
@@ -333,25 +332,25 @@
 				if (search.expandTo) {
 					// show spinner while expanding tree
 					showSpinner();
-					continueFeature.expandItemIds = search.expandTo
+					expandItemIds = search.expandTo
 						.split(',')
 						.map(id => `#${id}[src*=treemenu_collapsed]`);
 					// start recursively expanding the content tree
-					continueFeature.expandNext();
+					expandNext();
 				}
 				if (search.guidTo) {
 					document.getElementById('TreeSearch').value = search.guidTo;
 					if (search.langTo) {
 						showSpinner();
-						continueFeature.langMenuObserver.observe(document.getElementById('ContentEditor'), {attributes:false, childList: true, subtree: true});
+						langMenuObserver.observe(document.getElementById('ContentEditor'), {attributes:false, childList: true, subtree: true});
 					}
 					document.querySelector('.scSearchButton').click();
 				}
 			}
 			return true;
-		},
-		treeObserver : null, // new MutationObserver(continueFeature.expandNext),
-		expandNext : function(mutationList) {
+		}
+		let treeObserver = new MutationObserver(expandNext);
+		function expandNext(mutationList) {
 			if (mutationList) {
 				// If there is a mutationList (and thus this function triggered from the MutationObserver)
 				// then check if there are mutationRecords that have expandable <img> nodes somewhere in
@@ -362,13 +361,13 @@
 					return;
 				}
 			}
-			continueFeature.treeObserver.disconnect();
-			if (continueFeature.expandItemIds.length == 0) {
+			treeObserver.disconnect();
+			if (expandItemIds.length == 0) {
 				// no more items to expand, now scroll, click and hide the spinner
 				let nodeToClick = document.querySelector(`a#${search.clickTo}.scContentTreeNodeNormal`);
 				if (nodeToClick) {
 					// click the node to open the item and wait till the item is opened
-					continueFeature.langMenuObserver.observe(document.getElementById('ContentEditor'), {attributes:false, childList: true, subtree: true});
+					langMenuObserver.observe(document.getElementById('ContentEditor'), {attributes:false, childList: true, subtree: true});
 					nodeToClick.click();
 				} else {
 					// nothing to click, scroll and hide spinner
@@ -378,60 +377,58 @@
 				return;
 			}
 			// take next item to click, if it doesn't exist skip, else observe its parent's children and click it.
-			let itemId = continueFeature.expandItemIds.shift();
+			let itemId = expandItemIds.shift();
 			let item = document.querySelector(itemId);
 			if (!item) {
-				continueFeature.expandNext();
+				expandNext();
 				return;
 			}
-			continueFeature.treeObserver.observe(item.parentNode, {attributes:false, childList: true, subtree: true});
+			treeObserver.observe(item.parentNode, {attributes:false, childList: true, subtree: true});
 			item.click();
-		},
-		langMenuObserver : null, // new MutationObserver(continueFeature.openLanguageMenu),
-		openLanguageMenu : function(mutationList) {
+		}
+		let langMenuObserver = new MutationObserver(openLanguageMenu);
+		function openLanguageMenu(mutationList) {
 			if (!searchMutationListFor(mutationList, '#EditorTabs .scEditorHeaderVersionsLanguage')) {
 				return;
 			}
 			// item has opened enough to open Language Menu and scroll to scrollTo position
-			continueFeature.langMenuObserver.disconnect();
+			langMenuObserver.disconnect();
 			if (search.scrollTo) {
 				document.getElementById('ContentTreeInnerPanel').scrollTop = search.scrollTo;
 			}
 			if (search.langTo != document.querySelector('#scLanguage').value) {
 				// current language is different than previously selected language, click Language Menu and wait for it to load.
 				let langLink = document.querySelector('.scEditorHeaderVersionsLanguage');
-				continueFeature.langFrameObserver.observe(langLink, {attributes:false, childList: true, subtree: true});
+				langFrameObserver.observe(langLink, {attributes:false, childList: true, subtree: true});
 				setTimeout(function() { langLink.click(); }, 500);
 			} else {
 				// nothing left to do, hide spinner
 				hideSpinner();
 			}
-		},
-		langFrameObserver : null, // new MutationObserver(continueFeature.clickLanguage),
-		clickLanguage : function(mutationList) {
+		}
+		let langFrameObserver = new MutationObserver(clickLanguage);
+		function clickLanguage(mutationList) {
 			if (!searchMutationListFor(mutationList, '#Header_Language_Gallery')) {
 				return;
 			}
 			// iframe was placed, when the iframe's document has loaded click the correct language and hide spinner
-			continueFeature.langFrameObserver.disconnect();
+			langFrameObserver.disconnect();
 			document.getElementById('Header_Language_Gallery').onload = function() {
 				this.contentWindow.document.querySelector(`div.scMenuPanelItem[onclick*="language=${search.langTo}"]`).click();
 				hideSpinner();
 			}
 		}
-	}
-	continueFeature.treeObserver = new MutationObserver(continueFeature.expandNext);
-	continueFeature.langMenuObserver = new MutationObserver(continueFeature.openLanguageMenu);
-	continueFeature.langFrameObserver = new MutationObserver(continueFeature.clickLanguage);
+	})();
 
-	var quickAccess = {
-		getContainer : function () {
+	var quickAccess = new (function() {
+		let _this = this;
+		this.getContainer = function () {
 			let qaContainer = document.createElement('div');
 				qaContainer.id = 'QuickAccess';
 				qaContainer.style.float = 'right';
 			return qaContainer;
-		},
-		render : function() {
+		}
+		this.render = function() {
 			let qaBar = document.getElementById('QuickAccess');
 			let qaItems = JSON.parse(GM_getValue('QuickAccessItems', '[]'));
 			if (!qaBar || !qaItems) {
@@ -447,8 +444,8 @@
 					qaItem.style.marginLeft = '10px';
 				qaBar.appendChild(qaItem);
 			}
-		},
-		initCheckboxes : function () {
+		}
+		this.initCheckboxes = function () {
 			let items = q('.sc-launchpad-item');
 			let qaItems = JSON.parse(GM_getValue('QuickAccessItems', '[]'));
 			for (let i = 0; i < items.length; i++) {
@@ -460,11 +457,11 @@
 					chck.style.position = 'absolute';
 					chck.style.left = '0';
 					chck.style.top = '-4px';
-					chck.onclick = quickAccess.setItemAsQuickAccess;
+					chck.onclick = setItemAsQuickAccess;
 				item.appendChild(chck);
 			}
-		},
-		setItemAsQuickAccess : function () {
+		}
+		function setItemAsQuickAccess() {
 			let item = {
 				'href' : this.parentNode.getAttribute('href'),
 				'imgsrc' : this.parentNode.querySelector('img').getAttribute('src'),
@@ -482,9 +479,9 @@
 				}
 			}
 			GM_setValue('QuickAccessItems', JSON.stringify(qaItems));
-			quickAccess.render();
+			_this.render();
 		}
-	};
+	})();
 
 	init();
 
