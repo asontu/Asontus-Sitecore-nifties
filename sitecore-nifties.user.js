@@ -38,11 +38,12 @@
 			// we're inside some non-Ribbon iframe we don't care about, exit
 			return;
 		}
-
+		if (contentEditor) {
+			contentTreeTweaks.init();
+		}
 		if (!continueFeature.init()) {
 			return;
 		}
-
 		let envName, envColor;
 		[envName, envColor] = recognizedDomain.init();
 		headerInfo.repaint(globalLogo, envName, envColor);
@@ -72,12 +73,7 @@
 		}
 	}
 
-	var wasScrolledToBottom = false;
-	var searchObserver = new MutationObserver(hideSearchResults);
-	var searchScrollObserver = new MutationObserver(scrollToResult);
-	var scrollObserver = new MutationObserver(scrollToBottom);
 	var formDetailObserver = new MutationObserver(openInContentEditor);
-	var itemIds = [];
 	var search = getSearch();
 	var globalLogo;
 
@@ -345,7 +341,6 @@
 				return false;
 			}
 			if (contentEditor) {
-				searchObserver.observe(document.getElementById('SearchResultHolder'), {attributes:true, childList: false, subtree: false});
 				if (search.expandTo) {
 					// show spinner while expanding tree
 					showSpinner();
@@ -500,19 +495,17 @@
 		}
 	})();
 
-	init();
-
-	colorize();
-	function colorize() {
-		if (contentEditor) {
+	var contentTreeTweaks = new (function() {
+		let wasScrolledToBottom = false;
+		this.init = function() {
 			// Add scroll-to-active-item button
-			var scrollLink = document.createElement('a');
+			let scrollLink = document.createElement('a');
 				scrollLink.innerHTML = '&leftrightarrows;';
 				scrollLink.style.fontSize = '1.5em';
 				scrollLink.style.marginLeft = '-1em';
 				scrollLink.style.cursor = 'pointer';
 				scrollLink.onclick = scrollToActive;
-			var newCel = document.querySelector('#SearchPanel tr').insertCell(2);
+			let newCel = document.querySelector('#SearchPanel tr').insertCell(2);
 				newCel.appendChild(scrollLink);
 			// Add stay-at-bottom event listener
 			document.getElementById('ContentTreeInnerPanel').onscroll = function() {
@@ -526,8 +519,51 @@
 					scrollObserver.disconnect();
 				}
 			}
+			searchObserver.observe(document.getElementById('SearchResultHolder'), {attributes:true, childList: false, subtree: false});
 		}
-	}
+		let scrollObserver = new MutationObserver(scrollToBottom);
+		let maxScroll;
+		function scrollToBottom(mutationList) {
+			let spinner = searchMutationListFor(mutationList, 'img[src*=sc-spinner]');
+			if (spinner && spinner[0].offsetTop > 0) {
+				maxScroll = spinner[0].offsetTop;
+			}
+			if (!searchMutationListFor(mutationList, 'img[src*=treemenu_collapsed][id],img[src*=noexpand][id]')) {
+				return;
+			}
+			setTimeout(function() {
+				let tree = document.getElementById('ContentTreeInnerPanel');
+				tree.scrollTop = Math.min(maxScroll, tree.scrollHeight - tree.clientHeight);
+			}, 200);
+		}
+		let searchObserver = new MutationObserver(hideSearchResults);
+		function hideSearchResults(mutationList) {
+			if (!mutationList.filter(ml => ml.attributeName == 'style').length) {
+				return;
+			}
+			if (document.getElementById('SearchResultHolder').style.display != 'none'
+				&& document.querySelectorAll('#SearchResult .scSearchLink').length == 1) {
+				searchScrollObserver.observe(document.getElementById('ContentTreeActualSize'), {attributes:false, childList: true, subtree: true});
+				document.querySelector('#SearchHeader .scElementHover').click();
+			}
+		}
+		let searchScrollObserver = new MutationObserver(scrollToResult);
+		function scrollToResult(mutationList) {
+			if (!searchMutationListFor(mutationList, 'a.scContentTreeNodeActive[id]')) {
+				return;
+			}
+			searchScrollObserver.disconnect();
+			scrollToActive();
+		}
+		function scrollToActive() {
+			let activeNode = document.querySelector('a.scContentTreeNodeActive[id]');
+			if (activeNode) {
+				document.getElementById('ContentTreeInnerPanel').scrollTop = Math.max(0, activeNode.offsetTop - document.getElementById('ContentTreeInnerPanel').offsetHeight/2);
+			}
+		}
+	})();
+
+	init();
 
 	var lastResponse = [];
 	if (formsEditor) {
@@ -625,47 +661,6 @@
 			})}`);
 			a.setAttribute('title', 'Open this form as item in the Content Editor');
 		q('.sc-applicationHeader-title')[0].appendChild(a);
-	}
-
-	function hideSearchResults(mutationList) {
-		if (!mutationList.filter(ml => ml.attributeName == 'style').length) {
-			return;
-		}
-		if (document.getElementById('SearchResultHolder').style.display != 'none'
-			&& document.querySelectorAll('#SearchResult .scSearchLink').length == 1) {
-			searchScrollObserver.observe(document.getElementById('ContentTreeActualSize'), {attributes:false, childList: true, subtree: true});
-			document.querySelector('#SearchHeader .scElementHover').click();
-		}
-	}
-
-	function scrollToResult(mutationList) {
-		if (!searchMutationListFor(mutationList, 'a.scContentTreeNodeActive[id]')) {
-			return;
-		}
-		searchScrollObserver.disconnect();
-		scrollToActive();
-	}
-
-	function scrollToActive() {
-		let activeNode = document.querySelector('a.scContentTreeNodeActive[id]');
-		if (activeNode) {
-			document.getElementById('ContentTreeInnerPanel').scrollTop = Math.max(0, activeNode.offsetTop - document.getElementById('ContentTreeInnerPanel').offsetHeight/2);
-		}
-	}
-
-	var maxScroll;
-	function scrollToBottom(mutationList) {
-		let spinner = searchMutationListFor(mutationList, 'img[src*=sc-spinner]');
-		if (spinner && spinner[0].offsetTop > 0) {
-			maxScroll = spinner[0].offsetTop;
-		}
-		if (!searchMutationListFor(mutationList, 'img[src*=treemenu_collapsed][id],img[src*=noexpand][id]')) {
-			return;
-		}
-		setTimeout(function() {
-			let tree = document.getElementById('ContentTreeInnerPanel');
-			tree.scrollTop = Math.min(maxScroll, tree.scrollHeight - tree.clientHeight);
-		}, 200);
 	}
 
 	// Helper functions
