@@ -269,7 +269,7 @@
 	var continueFeature = new (function() {
 		this.getButtons = function(dbName) {
 			if (dbName == '' || exm) {
-				return false;
+				return [false, false];
 			}
 			let switchTo1 = dbName == 'master' ? 'core' : 'master';
 			let continueQuery = '';
