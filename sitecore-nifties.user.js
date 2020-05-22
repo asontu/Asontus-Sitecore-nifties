@@ -52,12 +52,29 @@
 		if (launchPad) {
 			quickAccess.initCheckboxes();
 		}
+		if (exm) {
+			var exmObserver = new MutationObserver(repaintExmHeader);
+			var exmPanel = document.querySelector('div.progress-indicator-panel');
+
+			if (exmPanel) {
+				exmObserver.observe(exmPanel, {attributes:false, childList: true, subtree: true});
+			}
+			function repaintExmHeader() {
+				exmObserver.disconnect();
+
+				globalLogo = headerInfo.detectGlobalLogo();
+				if (globalLogo) {
+					headerInfo.repaint(globalLogo, envName, envColor);
+				}
+
+				exmObserver.observe(exmPanel, {attributes:false, childList: true, subtree: true});
+			}
+		}
 	}
 
 	var wasScrolledToBottom = false;
 	var searchObserver = new MutationObserver(hideSearchResults);
 	var searchScrollObserver = new MutationObserver(scrollToResult);
-	var exmObserver = new MutationObserver(colorize);
 	var scrollObserver = new MutationObserver(scrollToBottom);
 	var formDetailObserver = new MutationObserver(openInContentEditor);
 	var itemIds = [];
@@ -128,7 +145,7 @@
 	})();
 
 	var headerInfo = new (function() {
-		this.detectGlobalLogo = () => document.querySelector('#globalLogo, .sc-global-logo, .global-logo:not([style]), .logo-wrap img'),
+		this.detectGlobalLogo = () => document.querySelector('#globalLogo, .sc-global-logo, .global-logo:not([style]), .logo-wrap img');
 		this.repaint = function(globalLogo, envName, envColor) {
 			let logoContainer = globalLogo.parentElement;
 			let col = logoContainer.parentElement;
@@ -487,8 +504,6 @@
 
 	colorize();
 	function colorize() {
-		exmObserver.disconnect();
-
 		if (contentEditor) {
 			// Add scroll-to-active-item button
 			var scrollLink = document.createElement('a');
@@ -511,11 +526,6 @@
 					scrollObserver.disconnect();
 				}
 			}
-		}
-
-		var exmPanel = document.querySelector('div.progress-indicator-panel');
-		if (exmPanel) {
-			exmObserver.observe(exmPanel, {attributes:false, childList: true, subtree: true});
 		}
 	}
 
