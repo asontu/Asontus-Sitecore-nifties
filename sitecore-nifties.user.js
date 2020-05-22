@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Asontu's Sitecore nifties
 // @namespace    https://asontu.github.io/
-// @version      6.0
+// @version      6.1a
 // @description  Add environment info to Sitecore header, extend functionality
 // @author       Herman Scheele
 // @grant        GM_setValue
@@ -31,6 +31,11 @@
     const designingForm = isPage('/sitecore/client/Applications/FormsBuilder/Pages/FormDesigner');
     const loginScreen = isPage('/sitecore/login') || isPage('/Account/Login');
     const contentEditor = isPage('/sitecore/shell/Applications/Content%20Editor.aspx');
+
+	function init() {
+		recognizedDomain.init();
+	}
+
     var wasScrolledToBottom = false;
     var treeObserver = new MutationObserver(expandNext);
     var searchObserver = new MutationObserver(hideSearchResults);
@@ -45,65 +50,68 @@
     var search = getSearch();
     var globalLogo;
 
-    var registeredDomains = JSON.parse(GM_getValue('RegisteredDomains', '[]'));
-    var domainSettings = false;
-    var domIndex = registeredDomains.findIndex(d => new RegExp(d.regex).test(location.host));
-    if (domIndex > -1) {
-        domainSettings = registeredDomains[domIndex];
-    }
+	var recognizedDomain = {
+		registeredDomains : JSON.parse(GM_getValue('RegisteredDomains', '[]')),
+		domainSettings : false,
+		menuCommand : null,
+		init : function() {
+			let domIndex = this.registeredDomains.findIndex(d => new RegExp(d.regex).test(location.host));
+			if (domIndex > -1) {
+				this.domainSettings = this.registeredDomains[domIndex];
+			}
+			if (!this.domainSettings) {
+				this.menuCommand = GM_registerMenuCommand("Register domain with user-script", this.showRegForm, "h");
+			} else {
+				this.menuCommand = GM_registerMenuCommand("Forget this domain", this.forgetDomain, "h");
+			}
+		},
+		showRegForm : function() {
+			let ul = document.querySelector('ul.sc-accountInformation');
+			if (!ul) { return; }
+			let li = ul.querySelector('li');
 
-    var menuCommand;
-    if (!domainSettings) {
-        menuCommand = GM_registerMenuCommand("Register domain with user-script", showRegForm, "h");
-    } else {
-        menuCommand = GM_registerMenuCommand("Forget this domain", forgetDomain, "h");
-    }
+			recognizedDomain.addRegFormElement(ul, li, `<input type="text" id="domainRegex" placeholder="Domain regex" title="The regex to recognize this domain/environment" value="^${location.host.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}$" style="display: inline-block;max-width: 80%; line-height: initial; color: #000;">`);
+			recognizedDomain.addRegFormElement(ul, li, `<input type="text" id="domainFriendlyName" placeholder="Friendly name" title="Friendly name for this domain, will be placed in header and title" style="display: inline-block;width: 80%; line-height: initial; color: #000;">`);
+			recognizedDomain.addRegFormElement(ul, li, `<input type="color" id="domainColor" title="Color to give the header on this domain" value="#2b2b2b">`);
+			recognizedDomain.addRegFormElement(ul, li, `<button type="button" style="line-height: initial; color: #000;">Save</button>`);
 
-    function showRegForm() {
-        let ul = document.querySelector('ul.sc-accountInformation');
-        if (!ul) { return; }
-        let li = ul.querySelector('li');
+			ul.querySelector('button').onclick = function() {
+				recognizedDomain.domainSettings = {
+					regex : ul.querySelector('#domainRegex').value,
+					friendly : ul.querySelector('#domainFriendlyName').value,
+					color : ul.querySelector('#domainColor').value
+				};
 
-        addRegFormElement(ul, li, `<input type="text" id="domainRegex" placeholder="Regex domain matches" title="Regex domain matches" value="^${location.host.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}$" style="display: inline-block;max-width: 80%; line-height: initial; color: #000;">`);
-        addRegFormElement(ul, li, `<input type="text" id="domainFriendlyName" placeholder="Friendly name" title="Friendly name for this domain" style="display: inline-block;width: 80%; line-height: initial; color: #000;">`);
-        addRegFormElement(ul, li, `<input type="color" id="domainColor" title="Color to give the header on this domain" value="#2b2b2b">`);
-        addRegFormElement(ul, li, `<button type="button" style="line-height: initial; color: #000;">Save</button>`);
+				recognizedDomain.registeredDomains.push(recognizedDomain.domainSettings);
+				GM_setValue('RegisteredDomains', JSON.stringify(recognizedDomain.registeredDomains));
 
-        ul.querySelector('button').onclick = function() {
-            domainSettings = {
-                regex : ul.querySelector('#domainRegex').value,
-                friendly : ul.querySelector('#domainFriendlyName').value,
-                color : ul.querySelector('#domainColor').value
-            };
+				let formElements = q('ul.sc-accountInformation li.form-element');
+				for (let i = 0; i < formElements.length; i++) {
+					ul.removeChild(formElements[i]);
+				}
 
-            registeredDomains.push(domainSettings);
-            GM_setValue('RegisteredDomains', JSON.stringify(registeredDomains));
+				GM_unregisterMenuCommand(recognizedDomain.menuCommand);
+			}
+		},
+		addRegFormElement : function(ul, li, newHtml) {
+			let newLi = document.createElement('li');
+				newLi.className = 'form-element';
+				newLi.innerHTML = newHtml;
+			ul.insertBefore(newLi, li);
+		},
+		forgetDomain : function() {
+			recognizedDomain.registeredDomains = JSON.parse(GM_getValue('RegisteredDomains', '[]'));
+			let i = recognizedDomain.registeredDomains.findIndex(d => new RegExp(d.regex).test(location.host));
+			if (i > -1 && confirm(`Are you sure you want forget this ${recognizedDomain.registeredDomains[i].friendly} domain?\n\n(matched: ${recognizedDomain.registeredDomains[i].regex})`)) {
+				recognizedDomain.registeredDomains.splice(i, 1);
+				GM_setValue('RegisteredDomains', JSON.stringify(recognizedDomain.registeredDomains));
+				GM_unregisterMenuCommand(recognizedDomain.menuCommand);
+				recognizedDomain.domainSettings = false;
+			}
+		}
+	}
 
-            let formElements = q('ul.sc-accountInformation li.form-element');
-            for (let i = 0; i < formElements.length; i++) {
-                ul.removeChild(formElements[i]);
-            }
-
-            GM_unregisterMenuCommand(menuCommand);
-        }
-    }
-
-    function addRegFormElement(ul, li, newHtml) {
-        let newLi = document.createElement('li');
-            newLi.className = 'form-element';
-            newLi.innerHTML = newHtml;
-        ul.insertBefore(newLi, li);
-    }
-
-    function forgetDomain() {
-        registeredDomains = JSON.parse(GM_getValue('RegisteredDomains', '[]'));
-        let i = registeredDomains.findIndex(d => new RegExp(d.regex).test(location.host));
-        if (i > -1 && confirm(`Are you sure you want forget this ${registeredDomains[i].friendly} domain?\n\n(matched: ${registeredDomains[i].regex})`)) {
-            registeredDomains.splice(i, 1);
-            GM_setValue('RegisteredDomains', JSON.stringify(registeredDomains));
-            GM_unregisterMenuCommand(menuCommand);
-        }
-    }
+	init();
 
     colorize();
     function colorize() {
@@ -154,9 +162,9 @@
         // set color and name based on url
         var envName = '';
         var envColor = '';
-        if (domainSettings) {
-            envName = domainSettings.friendly;
-            envColor = domainSettings.color;
+        if (recognizedDomain.domainSettings) {
+            envName  = recognizedDomain.domainSettings.friendly;
+            envColor = recognizedDomain.domainSettings.color;
         }
         // add number to envName
         var envNum = location.host.match(/\d+/);
