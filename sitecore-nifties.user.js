@@ -39,6 +39,10 @@
 			return;
 		}
 
+		if (!continueFeature.init()) {
+			return;
+		}
+
 		let envName, envColor;
 		[envName, envColor] = recognizedDomain.init();
 		headerInfo.repaint(globalLogo, envName, envColor);
@@ -51,12 +55,9 @@
 	}
 
 	var wasScrolledToBottom = false;
-	var treeObserver = new MutationObserver(expandNext);
 	var searchObserver = new MutationObserver(hideSearchResults);
 	var searchScrollObserver = new MutationObserver(scrollToResult);
 	var exmObserver = new MutationObserver(colorize);
-	var langMenuObserver = new MutationObserver(openLanguageMenu);
-	var langFrameObserver = new MutationObserver(clickLanguage);
 	var scrollObserver = new MutationObserver(scrollToBottom);
 	var formDetailObserver = new MutationObserver(openInContentEditor);
 	var itemIds = [];
@@ -308,8 +309,120 @@
 				href = href.replace(new RegExp(`[?&]${paramNames[p]}=[^?&#]*`), '');
 			}
 			return href;
+		},
+		expandItemIds : [],
+		init : function () {
+			if (desktop && search.continueTo) {
+				// we arrived at the desktop to switch databases and continue where we were
+				let continueTo = search.continueTo;
+				if (search.expandTo) {
+					// pass on all params needed to expand, scroll and click to the same position in the content editor
+					continueTo = prepForQuery(continueTo) + generateUrlQuery({
+						'expandTo' : search.expandTo,
+						'scrollTo' : search.scrollTo,
+						'clickTo' : search.clickTo,
+						'langTo' : search.langTo
+					});
+				}
+				// go to the page the user was using before switching database
+				location.replace(continueTo);
+				return false;
+			}
+			if (contentEditor) {
+				searchObserver.observe(document.getElementById('SearchResultHolder'), {attributes:true, childList: false, subtree: false});
+				if (search.expandTo) {
+					// show spinner while expanding tree
+					showSpinner();
+					continueFeature.expandItemIds = search.expandTo
+						.split(',')
+						.map(id => `#${id}[src*=treemenu_collapsed]`);
+					// start recursively expanding the content tree
+					continueFeature.expandNext();
+				}
+				if (search.guidTo) {
+					document.getElementById('TreeSearch').value = search.guidTo;
+					if (search.langTo) {
+						showSpinner();
+						continueFeature.langMenuObserver.observe(document.getElementById('ContentEditor'), {attributes:false, childList: true, subtree: true});
+					}
+					document.querySelector('.scSearchButton').click();
+				}
+			}
+			return true;
+		},
+		treeObserver : null, // new MutationObserver(continueFeature.expandNext),
+		expandNext : function(mutationList) {
+			if (mutationList) {
+				// If there is a mutationList (and thus this function triggered from the MutationObserver)
+				// then check if there are mutationRecords that have expandable <img> nodes somewhere in
+				// their tree by looking for src containing treemenu_collapsed, or clickable nodes by looking
+				// for src containing noexpand. If not then there's nothing to click, wait for the next
+				// MutationObserver come-around.
+				if (!searchMutationListFor(mutationList, 'img[src*=treemenu_collapsed][id],img[src*=noexpand][id]')) {
+					return;
+				}
+			}
+			continueFeature.treeObserver.disconnect();
+			if (continueFeature.expandItemIds.length == 0) {
+				// no more items to expand, now scroll, click and hide the spinner
+				let nodeToClick = document.querySelector(`a#${search.clickTo}.scContentTreeNodeNormal`);
+				if (nodeToClick) {
+					// click the node to open the item and wait till the item is opened
+					continueFeature.langMenuObserver.observe(document.getElementById('ContentEditor'), {attributes:false, childList: true, subtree: true});
+					nodeToClick.click();
+				} else {
+					// nothing to click, scroll and hide spinner
+					document.getElementById('ContentTreeInnerPanel').scrollTop = search.scrollTo;
+					hideSpinner();
+				}
+				return;
+			}
+			// take next item to click, if it doesn't exist skip, else observe its parent's children and click it.
+			let itemId = continueFeature.expandItemIds.shift();
+			let item = document.querySelector(itemId);
+			if (!item) {
+				continueFeature.expandNext();
+				return;
+			}
+			continueFeature.treeObserver.observe(item.parentNode, {attributes:false, childList: true, subtree: true});
+			item.click();
+		},
+		langMenuObserver : null, // new MutationObserver(continueFeature.openLanguageMenu),
+		openLanguageMenu : function(mutationList) {
+			if (!searchMutationListFor(mutationList, '#EditorTabs .scEditorHeaderVersionsLanguage')) {
+				return;
+			}
+			// item has opened enough to open Language Menu and scroll to scrollTo position
+			continueFeature.langMenuObserver.disconnect();
+			if (search.scrollTo) {
+				document.getElementById('ContentTreeInnerPanel').scrollTop = search.scrollTo;
+			}
+			if (search.langTo != document.querySelector('#scLanguage').value) {
+				// current language is different than previously selected language, click Language Menu and wait for it to load.
+				let langLink = document.querySelector('.scEditorHeaderVersionsLanguage');
+				continueFeature.langFrameObserver.observe(langLink, {attributes:false, childList: true, subtree: true});
+				setTimeout(function() { langLink.click(); }, 500);
+			} else {
+				// nothing left to do, hide spinner
+				hideSpinner();
+			}
+		},
+		langFrameObserver : null, // new MutationObserver(continueFeature.clickLanguage),
+		clickLanguage : function(mutationList) {
+			if (!searchMutationListFor(mutationList, '#Header_Language_Gallery')) {
+				return;
+			}
+			// iframe was placed, when the iframe's document has loaded click the correct language and hide spinner
+			continueFeature.langFrameObserver.disconnect();
+			document.getElementById('Header_Language_Gallery').onload = function() {
+				this.contentWindow.document.querySelector(`div.scMenuPanelItem[onclick*="language=${search.langTo}"]`).click();
+				hideSpinner();
+			}
 		}
 	}
+	continueFeature.treeObserver = new MutationObserver(continueFeature.expandNext);
+	continueFeature.langMenuObserver = new MutationObserver(continueFeature.openLanguageMenu);
+	continueFeature.langFrameObserver = new MutationObserver(continueFeature.clickLanguage);
 
 	var quickAccess = {
 		getContainer : function () {
@@ -378,42 +491,6 @@
 	colorize();
 	function colorize() {
 		exmObserver.disconnect();
-		if (desktop && search.continueTo) {
-			// we arrived at the desktop to switch databases and continue where we were
-			let continueTo = search.continueTo;
-			if (search.expandTo) {
-				// pass on all params needed to expand, scroll and click to the same position in the content editor
-				continueTo = prepForQuery(continueTo) + generateUrlQuery({
-					'expandTo' : search.expandTo,
-					'scrollTo' : search.scrollTo,
-					'clickTo' : search.clickTo,
-					'langTo' : search.langTo
-				});
-			}
-			// go to the page the user was using before switching database
-			location.replace(continueTo);
-			return;
-		}
-		if (contentEditor) {
-			searchObserver.observe(document.getElementById('SearchResultHolder'), {attributes:true, childList: false, subtree: false});
-			if (search.expandTo) {
-				// show spinner while expanding tree
-				showSpinner();
-				itemIds = search.expandTo
-					.split(',')
-					.map(id => `#${id}[src*=treemenu_collapsed]`);
-				// start recursively expanding the content tree
-				expandNext();
-			}
-			if (search.guidTo) {
-				document.getElementById('TreeSearch').value = search.guidTo;
-				if (search.langTo) {
-					showSpinner();
-					langMenuObserver.observe(document.getElementById('ContentEditor'), {attributes:false, childList: true, subtree: true});
-				}
-				document.querySelector('.scSearchButton').click();
-			}
-		}
 
 		if (contentEditor) {
 			// Add scroll-to-active-item button
@@ -582,75 +659,6 @@
 			let tree = document.getElementById('ContentTreeInnerPanel');
 			tree.scrollTop = Math.min(maxScroll, tree.scrollHeight - tree.clientHeight);
 		}, 200);
-	}
-
-	function expandNext(mutationList) {
-		if (mutationList) {
-			// If there is a mutationList (and thus this function triggered from the MutationObserver)
-			// then check if there are mutationRecords that have expandable <img> nodes somewhere in
-			// their tree by looking for src containing treemenu_collapsed, or clickable nodes by looking
-			// for src containing noexpand. If not then there's nothing to click, wait for the next
-			// MutationObserver come-around.
-			if (!searchMutationListFor(mutationList, 'img[src*=treemenu_collapsed][id],img[src*=noexpand][id]')) {
-				return;
-			}
-		}
-		treeObserver.disconnect();
-		if (itemIds.length == 0) {
-			// no more items to expand, now scroll, click and hide the spinner
-			let nodeToClick = document.querySelector(`a#${search.clickTo}.scContentTreeNodeNormal`);
-			if (nodeToClick) {
-				// click the node to open the item and wait till the item is opened
-				langMenuObserver.observe(document.getElementById('ContentEditor'), {attributes:false, childList: true, subtree: true});
-				nodeToClick.click();
-			} else {
-				// nothing to click, scroll and hide spinner
-				document.getElementById('ContentTreeInnerPanel').scrollTop = search.scrollTo;
-				hideSpinner();
-			}
-			return;
-		}
-		// take next item to click, if it doesn't exist skip, else observe its parent's children and click it.
-		let itemId = itemIds.shift();
-		let item = document.querySelector(itemId);
-		if (!item) {
-			expandNext();
-			return;
-		}
-		treeObserver.observe(item.parentNode, {attributes:false, childList: true, subtree: true});
-		item.click();
-	}
-
-	function openLanguageMenu(mutationList) {
-		if (!searchMutationListFor(mutationList, '#EditorTabs .scEditorHeaderVersionsLanguage')) {
-			return;
-		}
-		// item has opened enough to open Language Menu and scroll to scrollTo position
-		langMenuObserver.disconnect();
-		if (search.scrollTo) {
-			document.getElementById('ContentTreeInnerPanel').scrollTop = search.scrollTo;
-		}
-		if (search.langTo != document.querySelector('#scLanguage').value) {
-			// current language is different than previously selected language, click Language Menu and wait for it to load.
-			let langLink = document.querySelector('.scEditorHeaderVersionsLanguage');
-			langFrameObserver.observe(langLink, {attributes:false, childList: true, subtree: true});
-			setTimeout(function() { langLink.click(); }, 500);
-		} else {
-			// nothing left to do, hide spinner
-			hideSpinner();
-		}
-	}
-
-	function clickLanguage(mutationList) {
-		if (!searchMutationListFor(mutationList, '#Header_Language_Gallery')) {
-			return;
-		}
-		// iframe was placed, when the iframe's document has loaded click the correct language and hide spinner
-		langFrameObserver.disconnect();
-		document.getElementById('Header_Language_Gallery').onload = function() {
-			this.contentWindow.document.querySelector(`div.scMenuPanelItem[onclick*="language=${search.langTo}"]`).click();
-			hideSpinner();
-		}
 	}
 
 	// Helper functions
