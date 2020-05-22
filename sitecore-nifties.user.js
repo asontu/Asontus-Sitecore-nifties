@@ -56,13 +56,7 @@
 			quickAccess.initCheckboxes();
 		}
 		if (exm) {
-			var exmObserver = new MutationObserver(repaintExmHeader);
-			var exmPanel = document.querySelector('div.progress-indicator-panel');
-
-			if (exmPanel) {
-				exmObserver.observe(exmPanel, {attributes:false, childList: true, subtree: true});
-			}
-			function repaintExmHeader() {
+			var exmObserver = new MutationObserver(function() {
 				exmObserver.disconnect();
 
 				globalLogo = headerInfo.detectGlobalLogo();
@@ -70,6 +64,12 @@
 					headerInfo.repaint(globalLogo, envName, envColor);
 				}
 
+				exmObserver.observe(exmPanel, {attributes:false, childList: true, subtree: true});
+			});
+
+			var exmPanel = document.querySelector('div.progress-indicator-panel');
+
+			if (exmPanel) {
 				exmObserver.observe(exmPanel, {attributes:false, childList: true, subtree: true});
 			}
 		}
@@ -241,8 +241,7 @@
 				langHiddenObserver.observe(document.querySelector('div[data-sc-id=LanguageListControl] .sc-listcontrol-content'), {attributes:true, childList: false, subtree: true});
 			}
 		}
-		let langHiddenObserver = new MutationObserver(updateShownLang);
-		function updateShownLang(mutationList) {
+		let langHiddenObserver = new MutationObserver(function(mutationList) {
 			let curLang;
 			if (contentEditor && mutationList.filter(ml => ml.attributeName == 'value').length) {
 				curLang = document.getElementById('scLanguage').value;
@@ -260,7 +259,7 @@
 			document.getElementById('showLang').innerHTML = curLang;
 			let rightCol = document.querySelector('.sc-globalHeader-loginInfo').parentElement;
 				rightCol.style.backgroundImage = flags[curLang];
-		}
+		});
 	})();
 
 	var continueFeature = new (function() {
@@ -399,8 +398,7 @@
 			treeObserver.observe(item.parentNode, {attributes:false, childList: true, subtree: true});
 			item.click();
 		}
-		let langMenuObserver = new MutationObserver(openLanguageMenu);
-		function openLanguageMenu(mutationList) {
+		let langMenuObserver = new MutationObserver(function(mutationList) {
 			if (!searchMutationListFor(mutationList, '#EditorTabs .scEditorHeaderVersionsLanguage')) {
 				return;
 			}
@@ -418,9 +416,8 @@
 				// nothing left to do, hide spinner
 				hideSpinner();
 			}
-		}
-		let langFrameObserver = new MutationObserver(clickLanguage);
-		function clickLanguage(mutationList) {
+		});
+		let langFrameObserver = new MutationObserver(function(mutationList) {
 			if (!searchMutationListFor(mutationList, '#Header_Language_Gallery')) {
 				return;
 			}
@@ -430,7 +427,7 @@
 				this.contentWindow.document.querySelector(`div.scMenuPanelItem[onclick*="language=${search.langTo}"]`).click();
 				hideSpinner();
 			}
-		}
+		});
 	})();
 
 	var quickAccess = new (function() {
