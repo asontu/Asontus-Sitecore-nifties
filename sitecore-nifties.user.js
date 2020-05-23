@@ -100,7 +100,7 @@
 			if (!ul) { return; }
 			let li = ul.querySelector('li');
 
-			addRegFormElement(ul, li, `<input type="text" id="domainRegex" placeholder="Domain regex" title="The regex to recognize this domain/environment" value="^${location.host.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}$" style="display: inline-block;max-width: 80%; line-height: initial; color: #000;">`);
+			addRegFormElement(ul, li, `<input type="text" id="domainRegex" placeholder="Domain regex" title="The regex to recognize this domain/environment" value="^${regEsc(location.host)}$" style="display: inline-block;max-width: 80%; line-height: initial; color: #000;">`);
 			addRegFormElement(ul, li, `<input type="text" id="domainFriendlyName" placeholder="Friendly name" title="Friendly name for this domain, will be placed in header and title" style="display: inline-block;width: 80%; line-height: initial; color: #000;">`);
 			addRegFormElement(ul, li, `<input type="color" id="domainColor" title="Color to give the header on this domain" value="#2b2b2b">`);
 			addRegFormElement(ul, li, `<button type="button" style="line-height: initial; color: #000;">Save</button>`);
@@ -695,8 +695,11 @@
 			return false;
 		}
 	}
+	function regEsc(str) {
+		return str.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+	}
 	function isPage(url) {
-		return location.pathname.match(new RegExp(url.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'i'));
+		return location.pathname.match(new RegExp(regEsc(url), 'i'));
 	}
 	function q(query) {
 		return toArr(document.querySelectorAll(query));
