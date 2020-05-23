@@ -667,7 +667,7 @@
 			return false;
 		}
 		let foundNodes = [];
-		let addNodes = function(addedNode) {
+		let findNodes = function(addedNode) {
 			if (addedNode.matches(query)) {
 				foundNodes.push(addedNode);
 			}
@@ -677,7 +677,7 @@
 			if (!mutationList[m].addedNodes.length) continue;
 			toArr(mutationList[m].addedNodes)
 				.filter(nod => nod.nodeType == 1)
-				.forEach(addNodes);
+				.forEach(findNodes);
 		}
 		if (!foundNodes.length) {
 			return false;
