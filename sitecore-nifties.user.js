@@ -710,6 +710,13 @@
 	function prepForQuery(inp) {
 		return inp + (inp.indexOf('?') > -1 ? '&' : '?');
 	}
+	function generateUrlQuery(obj) {
+		let retArray = [];
+		for (let prop in obj) {
+			retArray.push(`${prop}=${encodeURIComponent(obj[prop])}`);
+		}
+		return retArray.join('&');
+	}
 	function getSearch() {
 		let returnVal = {};
 		top.location.search
@@ -717,25 +724,6 @@
 			.slice(1)
 			.forEach(s => returnVal[s.split('=')[0]] = decodeURIComponent(s.split('=')[1]));
 		return returnVal;
-	}
-	function setLinkHref(link) {
-		let continueQuery = link.href.replace(/#.*/, '');
-		let ids = [];
-		q('img[src*=treemenu_expanded][id]').forEach(i => ids.push(i.id));
-		continueQuery += prepForQuery(continueQuery) + generateUrlQuery({
-			'expandTo' : ids.join(','),
-			'scrollTo' : document.getElementById('ContentTreeInnerPanel').scrollTop,
-			'clickTo' : document.querySelector('a.scContentTreeNodeActive[id]').id,
-			'langTo' : document.querySelector('#scLanguage').value
-		});
-		link.href = continueQuery;
-	}
-	function generateUrlQuery(obj) {
-		let retArray = [];
-		for (let prop in obj) {
-			retArray.push(`${prop}=${encodeURIComponent(obj[prop])}`);
-		}
-		return retArray.join('&');
 	}
 	function findDb() {
 		if (exm) {
