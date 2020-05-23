@@ -282,9 +282,7 @@
 				dbSwitch1.style.fontSize = '1.5em';
 				dbSwitch1.style.marginRight = '.5em';
 			if (contentEditor && switchTo1 != 'core' && dbName != 'core') {
-				dbSwitch1.onclick = function() {
-					setLinkHref(dbSwitch1);
-				}
+				dbSwitch1.onmouseover = dbSwitch1.onfocus = setLinkHref;
 			}
 			let switchTo2 = dbName == 'web' ? 'core' : 'web';
 			let dbSwitch2 = document.createElement('a');
@@ -294,24 +292,21 @@
 				dbSwitch2.style.fontStyle = 'italic';
 				dbSwitch2.style.fontSize = '1.5em';
 			if (contentEditor && switchTo2 != 'core' && dbName != 'core') {
-				dbSwitch2.onclick = function() {
-					setLinkHref(dbSwitch2);
-				}
+				dbSwitch2.onmouseover = dbSwitch2.onfocus = setLinkHref;
 			}
 			return [dbSwitch1, dbSwitch2];
 		}
-		function setLinkHref(link) {
-			let continueQuery = cleanHref(link.href, true,
+		function setLinkHref() {
+			let continueQuery = cleanHref(this.href, true,
 				'expandTo', 'scrollTo', 'clickTo', 'langTo', 'guidTo');
 			let ids = [];
 			q('img[src*=treemenu_expanded][id]').forEach(i => ids.push(i.id));
-			continueQuery += prepForQuery(continueQuery) + generateUrlQuery({
+			this.href = prepForQuery(continueQuery) + generateUrlQuery({
 				'expandTo' : ids.join(','),
 				'scrollTo' : document.getElementById('ContentTreeInnerPanel').scrollTop,
 				'clickTo' : document.querySelector('a.scContentTreeNodeActive[id]').id,
 				'langTo' : document.querySelector('#scLanguage').value
 			});
-			link.href = continueQuery;
 		}
 		function cleanHref(href, removeAnker, ...paramNames) {
 			if (removeAnker) {
