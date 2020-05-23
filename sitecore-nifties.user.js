@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Asontu's Sitecore nifties
 // @namespace    https://asontu.github.io/
-// @version      6.2
+// @version      6.2.1
 // @description  Add environment info to Sitecore header, extend functionality
 // @author       Herman Scheele
 // @grant        GM_setValue
@@ -229,7 +229,8 @@
 				rightCol.style.height = '50px';
 				rightCol.style.backgroundSize = '75px 100%';
 				rightCol.style.backgroundRepeat = 'no-repeat';
-				rightCol.style.imageRendering = 'pixelated';
+				rightCol.style.imageRendering = 'crisp-edges'; // Gecko
+				rightCol.style.imageRendering = 'pixelated';   // WebKit/Chromium
 			if (contentEditor) {
 				let curLang = document.getElementById('scLanguage').value;
 				document.getElementById('showLang').innerHTML = curLang;
