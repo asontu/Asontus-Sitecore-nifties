@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Asontu's Sitecore nifties
 // @namespace    https://asontu.github.io/
-// @version      6.2.1
+// @version      6.2.2
 // @description  Add environment info to Sitecore header, extend functionality
 // @author       Herman Scheele
 // @grant        GM_setValue
@@ -146,11 +146,6 @@
 		this.repaint = function(globalLogo, envName, envColor) {
 			let logoContainer = globalLogo.parentElement;
 			let col = logoContainer.parentElement;
-			// add number to envName
-			let envNum = location.host.match(/\d+/);
-			if (envNum) {
-				envName += ' ' + envNum[0];
-			}
 			// add envName to document title before adding HTML
 			if (document.title.indexOf(envName) == -1) {
 				document.title = envName + ' ' + document.title;
@@ -160,7 +155,7 @@
 					? '8 '
 					: isPage('/Account/Login')
 					? '9 '
-					: `<img src="/temp/iconcache/apps/48x48/forms.png?uniq=${Date.now()}" style="display: none" onerror="this.outerHTML=8" onload="this.outerHTML=9"> `)
+					: `<img src="/-/temp/iconcache/apps/48x48/forms.png?uniq=${Date.now()}" style="display: none" onerror="this.outerHTML=8" onload="this.outerHTML=9"> `)
 				+ envName;
 			// add language and set initial flag
 			if (contentEditor || formsEditor) {
