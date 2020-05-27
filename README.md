@@ -70,7 +70,7 @@ Installation
 ------------
 
 1. Install [Tampermonkey](https://www.tampermonkey.net/) (or [Greasemonkey](https://addons.mozilla.org/en-US/firefox/addon/greasemonkey/) if you must)
-2. Go to the [Raw view of the userscript](https://github.com/asontu/Asontus-Sitecore-nifties/raw/2cefa5bd69e56685a77f0592fe4cbc939ea311cb/sitecore-nifties.user.js) and install.
+2. Go to the [Raw view of the userscript](https://github.com/asontu/Asontus-Sitecore-nifties/raw/master/sitecore-nifties.user.js) and click install.
 3. Add the url's for the Sitecore clients where you wanna use this userscript.
 4. Optionally configure different Sitecore clients to be recognized as different environments, see the [first feature](#see-information-directly-in-the-header)
 

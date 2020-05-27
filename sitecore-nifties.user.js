@@ -1,13 +1,15 @@
 // ==UserScript==
 // @name         Asontu's Sitecore nifties
 // @namespace    https://asontu.github.io/
-// @version      6.2.2
+// @version      6.2.3
 // @description  Add environment info to Sitecore header, extend functionality
 // @author       Herman Scheele
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_registerMenuCommand
 // @grant        GM_unregisterMenuCommand
+// @updateURL    https://github.com/asontu/Asontus-Sitecore-nifties/raw/master/sitecore-nifties.user.js
+// @downloadURL  https://github.com/asontu/Asontus-Sitecore-nifties/raw/master/sitecore-nifties.user.js
 // ==/UserScript==
 (function() {
 	'use strict';
