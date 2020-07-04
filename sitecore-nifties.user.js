@@ -594,10 +594,10 @@
 			}
 			if (designingForm && search.formId) {
 				addFormPencil(search.formId, search.lang);
+				addApplyButton();
 			}
 		}
-		let formDetailObserver = new MutationObserver(openInContentEditor);
-		function openInContentEditor(mutationList) {
+		let formDetailObserver = new MutationObserver(function(mutationList) {
 			if (!lastResponse.length) {
 				return;
 			}
@@ -641,7 +641,7 @@
 				par[0].appendChild(a);
 			}
 			formDetailObserver.observe(document.querySelector('div[data-sc-id=LinksListControl] .sc-listcontrol-content'), {attributes:false, childList: true, subtree: true});
-		}
+		});
 		function addFormPencil(guid, lang) {
 			let a = document.createElement('a');
 				a.innerHTML = '<img src="/temp/iconcache/apps/32x32/pencil.png" />';
@@ -651,6 +651,36 @@
 				})}`);
 				a.setAttribute('title', 'Open this form as item in the Content Editor');
 			q('.sc-applicationHeader-title')[0].appendChild(a);
+		}
+		var applyButton;
+		var saveUponDisable = false;
+		let propsBarObserver = new MutationObserver(function() {
+			applyButton.disabled = document.querySelector('[data-sc-id=ContextForPropertyGrid]').style.display == 'none';
+			if (saveUponDisable) {
+				document.querySelector('[data-sc-id=SaveButton]').click();
+				saveUponDisable = false;
+			}
+		});
+		function addApplyButton() {
+			let saveButton = document.querySelector('[data-sc-id=SaveButton]');
+			applyButton = saveButton.cloneNode(true);
+			applyButton.querySelector('span').innerText = 'Apply and Save';
+			applyButton.querySelector('span').removeAttribute('data-bind');
+			applyButton.setAttribute('data-sc-id', 'NiftyApplyButton');
+			applyButton.removeAttribute('data-sc-presenter');
+			applyButton.removeAttribute('data-sc-component');
+			applyButton.removeAttribute('data-sc-properties');
+			applyButton.removeAttribute('data-sc-require');
+			applyButton.removeAttribute('data-bind');
+			applyButton.style.marginLeft = '15px';
+			applyButton.disabled = true;
+			applyButton.onclick = function() {
+				saveUponDisable = true;
+				document.querySelector('[data-sc-id=PropertyGridApplyChangesButton]').click();
+			}
+			applyButton.removeChild(applyButton.querySelector('div'));
+			saveButton.parentNode.appendChild(applyButton);
+			propsBarObserver.observe(document.querySelector('[data-sc-id=ContextForPropertyGrid]'), {attributes:true, childList: false, subtree: false});
 		}
 	})();
 
