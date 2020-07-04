@@ -437,10 +437,14 @@
 			}
 			qaBar.innerHTML = '';
 			for (let i = 0; i < qaItems.length; i++) {
+				let imgSrc = qaItems[i].imgsrc;
+				let onErrorSrc = imgSrc.indexOf('/-/') == 0
+					? imgSrc.substring(2)
+					: `/-${imgSrc}`;
 				let qaItem = document.createElement('a');
 					qaItem.setAttribute('href', qaItems[i].href);
 					qaItem.setAttribute('title', qaItems[i].title);
-					qaItem.innerHTML = `<img src="${qaItems[i].imgsrc}" height="32" style="vertical-align:middle">`;
+					qaItem.innerHTML = `<img src="${imgSrc}" onerror="this.src='${onErrorSrc}'" height="32" style="vertical-align:middle">`;
 					qaItem.style.float = 'right';
 					qaItem.style.marginLeft = '10px';
 				qaBar.appendChild(qaItem);
