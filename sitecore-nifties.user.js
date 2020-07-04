@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Asontu's Sitecore nifties
 // @namespace    https://asontu.github.io/
-// @version      6.2.3
+// @version      6.2.4a1
 // @description  Add environment info to Sitecore header, extend functionality
 // @author       Herman Scheele
 // @grant        GM_setValue
@@ -453,22 +453,22 @@
 			let qaItems = JSON.parse(GM_getValue('QuickAccessItems', '[]'));
 			for (let i = 0; i < items.length; i++) {
 				let item = items[i];
-				item.style.position = 'relative';
+				item.parentNode.style.position = 'relative';
 				let chck = document.createElement('input');
 					chck.setAttribute('type', 'checkbox');
 					chck.checked = qaItems.findIndex(qi => qi.href == item.getAttribute('href')) != -1;
 					chck.style.position = 'absolute';
-					chck.style.left = '0';
-					chck.style.top = '-4px';
+					chck.style.top = '12px';
+					chck.style.zIndex = '1';
 					chck.onclick = setItemAsQuickAccess;
-				item.appendChild(chck);
+				item.parentNode.insertBefore(chck, item);
 			}
 		}
 		function setItemAsQuickAccess() {
 			let item = {
-				'href' : this.parentNode.getAttribute('href'),
-				'imgsrc' : this.parentNode.querySelector('img').getAttribute('src'),
-				'title' : this.parentNode.getAttribute('title')
+				'href' : this.nextElementSibling.getAttribute('href'),
+				'imgsrc' : this.nextElementSibling.querySelector('img').getAttribute('src'),
+				'title' : this.nextElementSibling.getAttribute('title')
 			};
 			let qaItems = JSON.parse(GM_getValue('QuickAccessItems', '[]'));
 			let qaIndex = qaItems.findIndex(qi => qi.href == item.href);
