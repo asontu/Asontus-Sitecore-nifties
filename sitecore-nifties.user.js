@@ -495,7 +495,8 @@
 			let scrollLink = document.createElement('a');
 				scrollLink.innerHTML = '&leftrightarrows;';
 				scrollLink.style.fontSize = '1.5em';
-				scrollLink.style.marginLeft = '-1em';
+				scrollLink.style.marginLeft = '-.5em';
+				scrollLink.style.marginRight = '-.5em';
 				scrollLink.style.cursor = 'pointer';
 				scrollLink.onclick = scrollToActive;
 			let newCel = document.querySelector('#SearchPanel tr').insertCell(2);
