@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Asontu's Sitecore nifties
 // @namespace    https://asontu.github.io/
-// @version      6.2.5
+// @version      6.2.6
 // @description  Add environment info to Sitecore header, extend functionality
 // @author       Herman Scheele
 // @grant        GM_setValue
@@ -208,7 +208,9 @@
 				a.style.top = '10px';
 				logoContainer.appendChild(a);
 			}
-			col.style.background = envColor;
+			if (envColor) {
+				col.style.background = `rgba(${hex2rgb(envColor).join(',')}, .8)`;
+			}
 			col.style.overflow = 'hidden';
 			col.style.whiteSpace = 'nowrap';
 			if (col.className == 'col-md-6') {
@@ -720,6 +722,12 @@
 		} catch (err) {
 			return false;
 		}
+	}
+	function hex2rgb(hex) {
+		let f = (hex.length - 1) / 6;
+		return ['0x' + hex[1 * f + .9 | 0] + hex[2 * f + .9 | 0] | 0,
+				'0x' + hex[3 * f + .9 | 0] + hex[4 * f + .9 | 0] | 0,
+				'0x' + hex[5 * f + .9 | 0] + hex[6 * f + .9 | 0] | 0];
 	}
 	function regEsc(str) {
 		return str.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
