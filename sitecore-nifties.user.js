@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Asontu's Sitecore nifties
 // @namespace    https://asontu.github.io/
-// @version      6.2.6
+// @version      6.2.7a1
 // @description  Add environment info to Sitecore header, extend functionality
 // @author       Herman Scheele
 // @grant        GM_setValue
@@ -106,6 +106,10 @@
 			addRegFormElement(ul, li, `<input type="text" id="domainFriendlyName" placeholder="Friendly name" title="Friendly name for this domain, will be placed in header and title" style="display: inline-block;width: 80%; line-height: initial; color: #000;">`);
 			addRegFormElement(ul, li, `<input type="color" id="domainColor" title="Color to give the header on this domain" value="#2b2b2b">`);
 			addRegFormElement(ul, li, `<button type="button" style="line-height: initial; color: #000;">Save</button>`);
+			
+			ul.querySelector('[type=color]').onchange = function() {
+				headerInfo.setHeaderColor(this.value);
+			}
 
 			ul.querySelector('button').onclick = function() {
 				domainSettings = {
@@ -144,6 +148,7 @@
 	})();
 
 	var headerInfo = new (function() {
+		var _this = this;
 		this.detectGlobalLogo = () => document.querySelector('#globalLogo, .sc-global-logo, .global-logo:not([style]), .logo-wrap img');
 		this.repaint = function(globalLogo, envName, envColor) {
 			let logoContainer = globalLogo.parentElement;
@@ -209,7 +214,7 @@
 				logoContainer.appendChild(a);
 			}
 			if (envColor) {
-				col.style.background = `rgba(${hex2rgb(envColor).join(',')}, .8)`;
+				_this.setHeaderColor(envColor);
 			}
 			col.style.overflow = 'hidden';
 			col.style.whiteSpace = 'nowrap';
@@ -217,6 +222,10 @@
 				col.className = 'col-xs-6';
 				col.nextElementSibling.className = 'col-xs-6';
 			}
+		}
+		this.setHeaderColor = function(hex) {
+			let col = _this.detectGlobalLogo().parentElement.parentElement;
+			col.style.background = `rgba(${hex2rgb(hex).join(',')}, .5)`;
 		}
 	})();
 
