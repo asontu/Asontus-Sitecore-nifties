@@ -89,7 +89,7 @@
 			if (domIndex > -1) {
 				domainSettings = registeredDomains[domIndex];
 			}
-			if (!domainSettings) {
+			if (!domainSettings && !loginScreen) {
 				menuCommand = GM_registerMenuCommand("Register domain with user-script", showRegForm, "r");
 				return ['', ''];
 			} else {
