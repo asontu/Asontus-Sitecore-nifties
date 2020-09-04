@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Asontu's Sitecore nifties
 // @namespace    https://asontu.github.io/
-// @version      6.2.7a1
+// @version      6.2.7
 // @description  Add environment info to Sitecore header, extend functionality
 // @author       Herman Scheele
 // @grant        GM_setValue
@@ -455,7 +455,7 @@
 				let qaItem = document.createElement('a');
 					qaItem.setAttribute('href', qaItems[i].href);
 					qaItem.setAttribute('title', qaItems[i].title);
-					qaItem.innerHTML = `<img src="${imgSrc}" onerror="this.src='${onErrorSrc}'" height="32" style="vertical-align:middle">`;
+					qaItem.innerHTML = `<img src="${imgSrc}" onerror="this.src='${onErrorSrc}';this.onerror=null;" height="32" style="vertical-align:middle">`;
 					qaItem.style.float = 'right';
 					qaItem.style.marginLeft = '10px';
 				qaBar.appendChild(qaItem);
