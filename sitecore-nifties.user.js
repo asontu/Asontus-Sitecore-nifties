@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Asontu's Sitecore nifties
 // @namespace    https://asontu.github.io/
-// @version      6.2.7
+// @version      6.2.8a
 // @description  Add environment info to Sitecore header, extend functionality
 // @author       Herman Scheele
 // @grant        GM_setValue
@@ -162,13 +162,13 @@
 					? '9 '
 					: `<img src="/-/temp/iconcache/apps/48x48/forms.png?uniq=${Date.now()}" style="display: none" onerror="this.outerHTML=8" onload="this.outerHTML=9"> `)
 				+ envName;
-			// add language and set initial flag
+			// add language
 			if (contentEditor || formsEditor) {
 				envName = `${envName} (<span id="showLang"><i>loading...</i></span>)`;
 			}
 			// add currently active database and append next to logo
 			let dbName = findDb();
-			envName = dbName == '' ? envName : `${envName} [${dbName}] `;
+			envName = dbName == '' ? envName : `${envName} [<span id="db-name">${dbName}</span>] `;
 			let span = document.createElement('span');
 				span.innerHTML = envName;
 				span.style.fontSize = '2em';
@@ -190,10 +190,14 @@
 				span.style.paddingLeft = '1em';
 				col.style.maxHeight = '50px';
 
-				let button1, button2;
-				[button1, button2] = continueFeature.getButtons(dbName);
+				let button0, button1, button2;
+				[button0, button1, button2] = continueFeature.getButtons(dbName);
 				if (button1) { logoContainer.appendChild(button1); }
 				if (button2) { logoContainer.appendChild(button2); }
+				if (button0) {
+					span.querySelector('#db-name').innerHTML = '';
+					span.querySelector('#db-name').appendChild(button0);
+				}
 
 				if (ribbon) {
 					col.style.position = 'relative';
@@ -275,11 +279,19 @@
 				return [false, false];
 			}
 			let switchTo1 = dbName == 'master' ? 'core' : 'master';
+			let currentHref = '';
 			let continueQuery = '';
 			if (!desktop) {
-				continueQuery = cleanHref(location.href.split(location.host)[1], true,
+				currentHref = cleanHref(location.href.split(location.host)[1], true,
 					'continueTo', 'expandTo', 'scrollTo', 'clickTo', 'langTo', 'guidTo');
-				continueQuery = '&' + generateUrlQuery({ 'continueTo' : continueQuery });
+				continueQuery = '&' + generateUrlQuery({ 'continueTo' : currentHref });
+			}
+			let dbSwitch0 = document.createElement('a');
+				dbSwitch0.setAttribute('href', currentHref);
+				dbSwitch0.innerHTML = dbName;
+				dbSwitch0.style.color = '#fff';
+			if (contentEditor) {
+				dbSwitch0.onmouseover = dbSwitch0.onfocus = setLinkHref;
 			}
 			let dbSwitch1 = document.createElement('a');
 				dbSwitch1.setAttribute('href', `/sitecore/shell/default.aspx?sc_content=${switchTo1}${continueQuery}`);
@@ -301,7 +313,7 @@
 			if (contentEditor && switchTo2 != 'core' && dbName != 'core') {
 				dbSwitch2.onmouseover = dbSwitch2.onfocus = setLinkHref;
 			}
-			return [dbSwitch1, dbSwitch2];
+			return [dbSwitch0, dbSwitch1, dbSwitch2];
 		}
 		function setLinkHref() {
 			let continueQuery = cleanHref(this.href, true,
