@@ -319,7 +319,7 @@
 			let continueQuery = cleanHref(this.href, true,
 				'expandTo', 'scrollTreeTo', 'scrollPanelTo', 'clickTo', 'langTo', 'guidTo');
 			let ids = [];
-			q('img[src*=treemenu_expanded][id]').forEach(i => ids.push(i.id));
+			q('img[src*=treemenu_expanded][id]').forEach(i => ids.push(i.id.replace('Tree_Glyph_', '')));
 			this.href = prepForQuery(continueQuery) + generateUrlQuery({
 				'expandTo' : ids.join(','),
 				'scrollTreeTo' : document.getElementById('ContentTreeInnerPanel').scrollTop,
@@ -362,7 +362,7 @@
 					showSpinner();
 					expandItemIds = search.expandTo
 						.split(',')
-						.map(id => `#${id}[src*=treemenu_collapsed]`);
+						.map(id => `#Tree_Glyph_${id}[src*=treemenu_collapsed]`);
 					// start recursively expanding the content tree
 					expandNext();
 				}
