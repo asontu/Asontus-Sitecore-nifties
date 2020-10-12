@@ -283,7 +283,7 @@
 			let continueQuery = '';
 			if (!desktop) {
 				currentHref = cleanHref(location.href.split(location.host)[1], true,
-					'continueTo', 'expandTo', 'scrollTreeTo', 'scrollPanelTo', 'clickTo', 'langTo', 'guidTo');
+					'continueTo', 'ribbonTo', 'expandTo', 'scrollTreeTo', 'scrollPanelTo', 'clickTo', 'langTo', 'guidTo');
 				continueQuery = '&' + generateUrlQuery({ 'continueTo' : currentHref });
 			}
 			let dbSwitch0 = document.createElement('a');
@@ -317,10 +317,11 @@
 		}
 		function setLinkHref() {
 			let continueQuery = cleanHref(this.href, true,
-				'expandTo', 'scrollTreeTo', 'scrollPanelTo', 'clickTo', 'langTo', 'guidTo');
+				'ribbonTo', 'expandTo', 'scrollTreeTo', 'scrollPanelTo', 'clickTo', 'langTo', 'guidTo');
 			let ids = [];
 			q('img[src*=treemenu_expanded][id]').forEach(i => ids.push(i.id.replace('Tree_Glyph_', '')));
 			this.href = prepForQuery(continueQuery) + generateUrlQuery({
+				'ribbonTo' : document.querySelector('.scRibbonNavigatorButtonsActive').id.split('Nav_')[1],
 				'expandTo' : ids.join(','),
 				'scrollTreeTo' : document.getElementById('ContentTreeInnerPanel').scrollTop,
 				'scrollPanelTo' : document.querySelector('.scEditorPanel').scrollTop,
@@ -345,6 +346,7 @@
 				if (search.expandTo) {
 					// pass on all params needed to expand, scroll and click to the same position in the content editor
 					continueTo = prepForQuery(continueTo) + generateUrlQuery({
+						'ribbonTo' : search.ribbonTo,
 						'expandTo' : search.expandTo,
 						'scrollTreeTo' : search.scrollTreeTo,
 						'scrollPanelTo' : search.scrollPanelTo,
@@ -365,6 +367,9 @@
 						.map(id => `#Tree_Glyph_${id}[src*=treemenu_collapsed]`);
 					// start recursively expanding the content tree
 					expandNext();
+				}
+				if (search.ribbonTo) {
+					document.querySelector(`[id$=${search.ribbonTo}]`).click();
 				}
 				if (search.guidTo) {
 					document.getElementById('TreeSearch').value = search.guidTo;
