@@ -283,7 +283,7 @@
 			let continueQuery = '';
 			if (!desktop) {
 				currentHref = cleanHref(location.href.split(location.host)[1], true,
-					'continueTo', 'expandTo', 'scrollTo', 'clickTo', 'langTo', 'guidTo');
+					'continueTo', 'expandTo', 'scrollTreeTo', 'scrollPanelTo', 'clickTo', 'langTo', 'guidTo');
 				continueQuery = '&' + generateUrlQuery({ 'continueTo' : currentHref });
 			}
 			let dbSwitch0 = document.createElement('a');
@@ -317,12 +317,13 @@
 		}
 		function setLinkHref() {
 			let continueQuery = cleanHref(this.href, true,
-				'expandTo', 'scrollTo', 'clickTo', 'langTo', 'guidTo');
+				'expandTo', 'scrollTreeTo', 'scrollPanelTo', 'clickTo', 'langTo', 'guidTo');
 			let ids = [];
 			q('img[src*=treemenu_expanded][id]').forEach(i => ids.push(i.id));
 			this.href = prepForQuery(continueQuery) + generateUrlQuery({
 				'expandTo' : ids.join(','),
-				'scrollTo' : document.getElementById('ContentTreeInnerPanel').scrollTop,
+				'scrollTreeTo' : document.getElementById('ContentTreeInnerPanel').scrollTop,
+				'scrollPanelTo' : document.querySelector('.scEditorPanel').scrollTop,
 				'clickTo' : document.querySelector('a.scContentTreeNodeActive[id]').id,
 				'langTo' : document.querySelector('#scLanguage').value
 			});
@@ -345,7 +346,8 @@
 					// pass on all params needed to expand, scroll and click to the same position in the content editor
 					continueTo = prepForQuery(continueTo) + generateUrlQuery({
 						'expandTo' : search.expandTo,
-						'scrollTo' : search.scrollTo,
+						'scrollTreeTo' : search.scrollTreeTo,
+						'scrollPanelTo' : search.scrollPanelTo,
 						'clickTo' : search.clickTo,
 						'langTo' : search.langTo
 					});
@@ -397,7 +399,7 @@
 					nodeToClick.click();
 				} else {
 					// nothing to click, scroll and hide spinner
-					document.getElementById('ContentTreeInnerPanel').scrollTop = search.scrollTo;
+					document.getElementById('ContentTreeInnerPanel').scrollTop = search.scrollTreeTo;
 					hideSpinner();
 				}
 				return;
@@ -416,10 +418,13 @@
 			if (!searchMutationListFor(mutationList, '#EditorTabs .scEditorHeaderVersionsLanguage')) {
 				return;
 			}
-			// item has opened enough to open Language Menu and scroll to scrollTo position
+			// item has opened enough to open Language Menu and scroll to scrollTreeTo position
 			langMenuObserver.disconnect();
-			if (search.scrollTo) {
-				document.getElementById('ContentTreeInnerPanel').scrollTop = search.scrollTo;
+			if (search.scrollTreeTo) {
+				document.getElementById('ContentTreeInnerPanel').scrollTop = search.scrollTreeTo;
+			}
+			if (search.scrollPanelTo) {
+				document.querySelector('.scEditorPanel').scrollTop = search.scrollPanelTo;
 			}
 			if (search.langTo != document.querySelector('#scLanguage').value) {
 				// current language is different than previously selected language, click Language Menu and wait for it to load.
