@@ -320,10 +320,10 @@
 			if (!onlyRibbon) {
 				let ids = [];
 				q('img[src*=treemenu_expanded][id]').forEach(i => ids.push(i.id.replace('Tree_Glyph_', '')));
-				qParams.expandTo = ids.join(',');
+				qParams.expandTo = ids.join('!');
 				qParams.scrollTreeTo = document.getElementById('ContentTreeInnerPanel').scrollTop;
 				qParams.scrollPanelTo = document.querySelector('.scEditorPanel').scrollTop;
-				qParams.clickTo = document.querySelector('a.scContentTreeNodeActive[id]').id;
+				qParams.clickTo = document.querySelector('a.scContentTreeNodeActive[id]').id.replace('Tree_Node_', '');
 				qParams.langTo = document.querySelector('#scLanguage').value;
 			}
 			dbSwitch.href = prepForQuery(continueQuery) + generateUrlQuery(qParams);
@@ -365,7 +365,7 @@
 					// show spinner while expanding tree
 					showSpinner();
 					expandItemIds = search.expandTo
-						.split(',')
+						.split('!')
 						.map(id => `#Tree_Glyph_${id}[src*=treemenu_collapsed]`);
 					// start recursively expanding the content tree
 					expandNext();
@@ -399,7 +399,7 @@
 			treeObserver.disconnect();
 			if (expandItemIds.length == 0) {
 				// no more items to expand, now scroll, click and hide the spinner
-				let nodeToClick = document.querySelector(`a#${search.clickTo}.scContentTreeNodeNormal`);
+				let nodeToClick = document.querySelector(`a#Tree_Node_${search.clickTo}.scContentTreeNodeNormal`);
 				if (nodeToClick) {
 					// click the node to open the item and wait till the item is opened
 					langMenuObserver.observe(document.getElementById('ContentEditor'), {attributes:false, childList: true, subtree: true});
