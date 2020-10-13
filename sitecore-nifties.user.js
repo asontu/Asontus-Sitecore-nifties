@@ -290,9 +290,6 @@
 				dbSwitch0.setAttribute('href', currentHref);
 				dbSwitch0.innerHTML = dbName;
 				dbSwitch0.style.color = '#fff';
-			if (contentEditor) {
-				dbSwitch0.onmouseover = dbSwitch0.onfocus = setLinkHref;
-			}
 			let dbSwitch1 = document.createElement('a');
 				dbSwitch1.setAttribute('href', `/sitecore/shell/default.aspx?sc_content=${switchTo1}${continueQuery}`);
 				dbSwitch1.innerHTML = `${switchTo1}`;
@@ -300,9 +297,6 @@
 				dbSwitch1.style.fontStyle = 'italic';
 				dbSwitch1.style.fontSize = '1.5em';
 				dbSwitch1.style.marginRight = '.5em';
-			if (contentEditor && switchTo1 != 'core' && dbName != 'core') {
-				dbSwitch1.onmouseover = dbSwitch1.onfocus = setLinkHref;
-			}
 			let switchTo2 = dbName == 'web' ? 'core' : 'web';
 			let dbSwitch2 = document.createElement('a');
 				dbSwitch2.setAttribute('href', `/sitecore/shell/default.aspx?sc_content=${switchTo2}${continueQuery}`);
@@ -310,24 +304,29 @@
 				dbSwitch2.style.color = '#fff';
 				dbSwitch2.style.fontStyle = 'italic';
 				dbSwitch2.style.fontSize = '1.5em';
-			if (contentEditor && switchTo2 != 'core' && dbName != 'core') {
-				dbSwitch2.onmouseover = dbSwitch2.onfocus = setLinkHref;
+			if (contentEditor) {
+				dbSwitch0.onmouseover = dbSwitch0.onfocus = function() { setLinkHref(this, false); }
+				dbSwitch1.onmouseover = dbSwitch1.onfocus = function() { setLinkHref(this, [switchTo1, dbName].indexOf('core') != -1); }
+				dbSwitch2.onmouseover = dbSwitch2.onfocus = function() { setLinkHref(this, [switchTo2, dbName].indexOf('core') != -1); }
 			}
 			return [dbSwitch0, dbSwitch1, dbSwitch2];
 		}
-		function setLinkHref() {
-			let continueQuery = cleanHref(this.href, true,
+		function setLinkHref(dbSwitch, onlyRibbon) {
+			let continueQuery = cleanHref(dbSwitch.href, true,
 				'ribbonTo', 'expandTo', 'scrollTreeTo', 'scrollPanelTo', 'clickTo', 'langTo', 'guidTo');
-			let ids = [];
-			q('img[src*=treemenu_expanded][id]').forEach(i => ids.push(i.id.replace('Tree_Glyph_', '')));
-			this.href = prepForQuery(continueQuery) + generateUrlQuery({
-				'ribbonTo' : document.querySelector('.scRibbonNavigatorButtonsActive').id.split('Nav_')[1],
-				'expandTo' : ids.join(','),
-				'scrollTreeTo' : document.getElementById('ContentTreeInnerPanel').scrollTop,
-				'scrollPanelTo' : document.querySelector('.scEditorPanel').scrollTop,
-				'clickTo' : document.querySelector('a.scContentTreeNodeActive[id]').id,
-				'langTo' : document.querySelector('#scLanguage').value
-			});
+			let qParams = {
+				'ribbonTo' : document.querySelector('.scRibbonNavigatorButtonsActive').id.split('Nav_')[1]
+			};
+			if (!onlyRibbon) {
+				let ids = [];
+				q('img[src*=treemenu_expanded][id]').forEach(i => ids.push(i.id.replace('Tree_Glyph_', '')));
+				qParams.expandTo = ids.join(',');
+				qParams.scrollTreeTo = document.getElementById('ContentTreeInnerPanel').scrollTop;
+				qParams.scrollPanelTo = document.querySelector('.scEditorPanel').scrollTop;
+				qParams.clickTo = document.querySelector('a.scContentTreeNodeActive[id]').id;
+				qParams.langTo = document.querySelector('#scLanguage').value;
+			}
+			dbSwitch.href = prepForQuery(continueQuery) + generateUrlQuery(qParams);
 		}
 		function cleanHref(href, removeAnker, ...paramNames) {
 			if (removeAnker) {
@@ -343,16 +342,19 @@
 			if (desktop && search.continueTo) {
 				// we arrived at the desktop to switch databases and continue where we were
 				let continueTo = search.continueTo;
-				if (search.expandTo) {
+				if (search.ribbonTo) {
+					let qParams = {
+						'ribbonTo' : search.ribbonTo
+					};
+					if (search.expandTo) {
+						qParams.expandTo = search.expandTo;
+						qParams.scrollTreeTo = search.scrollTreeTo;
+						qParams.scrollPanelTo = search.scrollPanelTo;
+						qParams.clickTo = search.clickTo;
+						qParams.langTo = search.langTo;
+					}
 					// pass on all params needed to expand, scroll and click to the same position in the content editor
-					continueTo = prepForQuery(continueTo) + generateUrlQuery({
-						'ribbonTo' : search.ribbonTo,
-						'expandTo' : search.expandTo,
-						'scrollTreeTo' : search.scrollTreeTo,
-						'scrollPanelTo' : search.scrollPanelTo,
-						'clickTo' : search.clickTo,
-						'langTo' : search.langTo
-					});
+					continueTo = prepForQuery(continueTo) + generateUrlQuery(qParams);
 				}
 				// go to the page the user was using before switching database
 				location.replace(continueTo);
