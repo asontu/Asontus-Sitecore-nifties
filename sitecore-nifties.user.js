@@ -550,9 +550,8 @@
 			}
 			searchObserver.observe(document.getElementById('SearchResultHolder'), {attributes:true, childList: false, subtree: false});
 		}
-		let scrollObserver = new MutationObserver(scrollToBottom);
 		let maxScroll;
-		function scrollToBottom(mutationList) {
+		let scrollObserver = new MutationObserver(function(mutationList) {
 			let spinner = searchMutationListFor(mutationList, 'img[src*=sc-spinner]');
 			if (spinner && spinner[0].offsetTop > 0) {
 				maxScroll = spinner[0].offsetTop;
@@ -564,9 +563,8 @@
 				let tree = document.getElementById('ContentTreeInnerPanel');
 				tree.scrollTop = Math.min(maxScroll, tree.scrollHeight - tree.clientHeight);
 			}, 200);
-		}
-		let searchObserver = new MutationObserver(hideSearchResults);
-		function hideSearchResults(mutationList) {
+		});
+		let searchObserver = new MutationObserver(function(mutationList) {
 			if (!mutationList.filter(ml => ml.attributeName == 'style').length) {
 				return;
 			}
@@ -575,15 +573,14 @@
 				searchScrollObserver.observe(document.getElementById('ContentTreeActualSize'), {attributes:false, childList: true, subtree: true});
 				document.querySelector('#SearchHeader .scElementHover').click();
 			}
-		}
-		let searchScrollObserver = new MutationObserver(scrollToResult);
-		function scrollToResult(mutationList) {
+		});
+		let searchScrollObserver = new MutationObserver(function(mutationList) {
 			if (!searchMutationListFor(mutationList, 'a.scContentTreeNodeActive[id]')) {
 				return;
 			}
 			searchScrollObserver.disconnect();
 			scrollToActive();
-		}
+		});
 		function scrollToActive() {
 			let activeNode = document.querySelector('a.scContentTreeNodeActive[id]');
 			if (activeNode) {
