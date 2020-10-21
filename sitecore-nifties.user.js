@@ -48,9 +48,9 @@
 		if (!continueFeature.init()) {
 			return;
 		}
-		let envName, envColor;
-		[envName, envColor] = recognizedDomain.init();
-		headerInfo.repaint(globalLogo, envName, envColor);
+		let envName, envColor, envAlpha;
+		[envName, envColor, envAlpha] = recognizedDomain.init();
+		headerInfo.repaint(globalLogo, envName, envColor, envAlpha);
 		if (contentEditor || formsEditor) {
 			languageInfo.init();
 		}
@@ -63,7 +63,7 @@
 
 				globalLogo = headerInfo.detectGlobalLogo();
 				if (globalLogo) {
-					headerInfo.repaint(globalLogo, envName, envColor);
+					headerInfo.repaint(globalLogo, envName, envColor, envAlpha);
 				}
 
 				exmObserver.observe(exmPanel, {attributes:false, childList: true, subtree: true});
@@ -91,10 +91,10 @@
 			}
 			if (!domainSettings && !loginScreen) {
 				menuCommand = GM_registerMenuCommand("Register domain with user-script", showRegForm, "r");
-				return ['', ''];
+				return ['', '', ''];
 			} else {
 				menuCommand = GM_registerMenuCommand("Forget this domain", forgetDomain, "f");
-				return [domainSettings.friendly, domainSettings.color];
+				return [domainSettings.friendly, domainSettings.color, domainSettings.alpha || '.5'];
 			}
 		}
 		function showRegForm() {
@@ -105,17 +105,23 @@
 			addRegFormElement(ul, li, `<input type="text" id="domainRegex" placeholder="Domain regex" title="The regex to recognize this domain/environment" value="^${regEsc(location.host)}$" style="display: inline-block;max-width: 80%; line-height: initial; color: #000;">`);
 			addRegFormElement(ul, li, `<input type="text" id="domainFriendlyName" placeholder="Friendly name" title="Friendly name for this domain, will be placed in header and title" style="display: inline-block;width: 80%; line-height: initial; color: #000;">`);
 			addRegFormElement(ul, li, `<input type="color" id="domainColor" title="Color to give the header on this domain" value="#2b2b2b">`);
+			addRegFormElement(ul, li, `<input type="range" id="domainAlpha" title="Transparency for the header color" min="0" max="1" step=".1" value=".5" style="width: 100px;transform: rotate(-90deg) translate(-40px);display: inline-block;margin: 0 -45px;">`);
 			addRegFormElement(ul, li, `<button type="button" style="line-height: initial; color: #000;">Save</button>`);
-			
+
 			ul.querySelector('[type=color]').onchange = function() {
-				headerInfo.setHeaderColor(this.value);
+				headerInfo.setHeaderColor(this.value, ul.querySelector('[type=range]').value);
+			}
+
+			ul.querySelector('[type=range]').onchange = function() {
+				headerInfo.setHeaderColor(ul.querySelector('[type=color]').value, this.value);
 			}
 
 			ul.querySelector('button').onclick = function() {
 				domainSettings = {
 					regex : ul.querySelector('#domainRegex').value,
 					friendly : ul.querySelector('#domainFriendlyName').value,
-					color : ul.querySelector('#domainColor').value
+					color : ul.querySelector('#domainColor').value,
+					alpha : ul.querySelector('#domainAlpha').value
 				};
 
 				registeredDomains.push(domainSettings);
@@ -150,7 +156,7 @@
 	var headerInfo = new (function() {
 		var _this = this;
 		this.detectGlobalLogo = () => document.querySelector('#globalLogo, .sc-global-logo, .global-logo:not([style]), .logo-wrap img');
-		this.repaint = function(globalLogo, envName, envColor) {
+		this.repaint = function(globalLogo, envName, envColor, envAlpha) {
 			let logoContainer = globalLogo.parentElement;
 			let col = logoContainer.parentElement;
 			// add envName to document title before adding HTML
@@ -218,7 +224,7 @@
 				logoContainer.appendChild(a);
 			}
 			if (envColor) {
-				_this.setHeaderColor(envColor);
+				_this.setHeaderColor(envColor, envAlpha);
 			}
 			col.style.overflow = 'hidden';
 			col.style.whiteSpace = 'nowrap';
@@ -227,9 +233,9 @@
 				col.nextElementSibling.className = 'col-xs-6';
 			}
 		}
-		this.setHeaderColor = function(hex) {
+		this.setHeaderColor = function(hex, alpha) {
 			let col = _this.detectGlobalLogo().parentElement.parentElement;
-			col.style.background = `rgba(${hex2rgb(hex).join(',')}, .5)`;
+			col.style.background = `rgba(${hex2rgb(hex).join(',')}, ${alpha})`;
 		}
 	})();
 
