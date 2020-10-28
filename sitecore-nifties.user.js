@@ -155,12 +155,13 @@
 
 	var headerInfo = new (function() {
 		var _this = this;
+		var headerCol;
 		this.detectGlobalLogo = () => document.querySelector('#globalLogo, .sc-global-logo, .global-logo:not([style]), .logo-wrap img');
 		this.repaint = function(globalLogo, envName, envColor, envAlpha) {
 			let logoContainer = globalLogo.parentElement;
-			let col = logoContainer.parentElement;
+			headerCol = logoContainer.parentElement;
 			// add envName to document title before adding HTML
-			if (document.title.indexOf(envName) == -1) {
+			if (document.title.indexOf(envName) != 0) {
 				document.title = envName + ' ' + document.title;
 			}
 			// add html with img of forms-icon that exists since Sitecore 9
@@ -194,7 +195,7 @@
 				globalLogo.style.float = 'left';
 				globalLogo.style.marginTop = '8.5px';
 				span.style.paddingLeft = '1em';
-				col.style.maxHeight = '50px';
+				headerCol.style.maxHeight = '50px';
 
 				let button0, button1, button2;
 				[button0, button1, button2] = continueFeature.getButtons(dbName);
@@ -206,7 +207,7 @@
 				}
 
 				if (ribbon) {
-					col.style.position = 'relative';
+					headerCol.style.position = 'relative';
 					a.setAttribute('target', '_top');
 					logoContainer.appendChild(a);
 				} else {
@@ -216,7 +217,7 @@
 				}
 			} else {
 				// different logic for the log-in screen
-				col.style.position = 'relative';
+				headerCol.style.position = 'relative';
 				span.style.position = 'absolute';
 				span.style.top = '10px';
 				span.style.left = '20px';
@@ -226,16 +227,18 @@
 			if (envColor) {
 				_this.setHeaderColor(envColor, envAlpha);
 			}
-			col.style.overflow = 'hidden';
-			col.style.whiteSpace = 'nowrap';
-			if (col.className == 'col-md-6') {
-				col.className = 'col-xs-6';
-				col.nextElementSibling.className = 'col-xs-6';
+			headerCol.style.overflow = 'hidden';
+			headerCol.style.whiteSpace = 'nowrap';
+			if (headerCol.className == 'col-md-6') {
+				headerCol.className = 'col-xs-6';
+				headerCol.nextElementSibling.className = 'col-xs-6';
 			}
 		}
 		this.setHeaderColor = function(hex, alpha) {
-			let col = _this.detectGlobalLogo().parentElement.parentElement;
-			col.style.background = `rgba(${hex2rgb(hex).join(',')}, ${alpha})`;
+			if (!headerCol) {
+				_this.detectGlobalLogo();
+			}
+			headerCol.style.background = `rgba(${hex2rgb(hex).join(',')}, ${alpha})`;
 		}
 	})();
 
