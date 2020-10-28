@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Asontu's Sitecore nifties
 // @namespace    https://asontu.github.io/
-// @version      6.2.8a
+// @version      6.2.8
 // @description  Add environment info to Sitecore header, extend functionality
 // @author       Herman Scheele
 // @grant        GM_setValue
@@ -108,12 +108,12 @@
 			addRegFormElement(ul, li, `<input type="range" id="domainAlpha" title="Transparency for the header color" min="0" max="1" step=".1" value=".5" style="width: 100px;transform: rotate(-90deg) translate(-40px);display: inline-block;margin: 0 -45px;">`);
 			addRegFormElement(ul, li, `<button type="button" style="line-height: initial; color: #000;">Save</button>`);
 
-			ul.querySelector('[type=color]').onchange = function() {
-				headerInfo.setHeaderColor(this.value, ul.querySelector('[type=range]').value);
+			ul.querySelector('#domainColor').onchange = function() {
+				headerInfo.setHeaderColor(this.value, ul.querySelector('#domainAlpha').value);
 			}
 
-			ul.querySelector('[type=range]').onchange = function() {
-				headerInfo.setHeaderColor(ul.querySelector('[type=color]').value, this.value);
+			ul.querySelector('#domainAlpha').onchange = function() {
+				headerInfo.setHeaderColor(ul.querySelector('#domainColor').value, this.value);
 			}
 
 			ul.querySelector('button').onclick = function() {
@@ -193,7 +193,9 @@
 
 			if (!loginScreen) {
 				globalLogo.style.float = 'left';
-				globalLogo.style.marginTop = '8.5px';
+				if (!exm) {
+					globalLogo.style.marginTop = '8.5px';
+				}
 				span.style.paddingLeft = '1em';
 				headerCol.style.maxHeight = '50px';
 
@@ -285,7 +287,7 @@
 	var continueFeature = new (function() {
 		this.getButtons = function(dbName) {
 			if (dbName == '' || exm) {
-				return [false, false];
+				return [false, false, false];
 			}
 			let switchTo1 = dbName == 'master' ? 'core' : 'master';
 			let currentHref = '';
@@ -467,7 +469,7 @@
 
 	var quickAccess = new (function() {
 		let _this = this;
-		this.getContainer = function () {
+		this.getContainer = function() {
 			let qaContainer = document.createElement('div');
 				qaContainer.id = 'QuickAccess';
 				qaContainer.style.float = 'right';
