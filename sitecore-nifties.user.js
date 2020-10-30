@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Asontu's Sitecore nifties
 // @namespace    https://asontu.github.io/
-// @version      6.2.8
+// @version      6.2.9b
 // @description  Add environment info to Sitecore header, extend functionality
 // @author       Herman Scheele
 // @grant        GM_setValue
@@ -349,7 +349,7 @@
 			return href;
 		}
 		let expandItemIds = [];
-		this.init = function () {
+		this.init = function() {
 			if (desktop && search.continueTo) {
 				// we arrived at the desktop to switch databases and continue where we were
 				let continueTo = search.continueTo;
@@ -496,7 +496,7 @@
 				qaBar.appendChild(qaItem);
 			}
 		}
-		this.initCheckboxes = function () {
+		this.initCheckboxes = function() {
 			let items = q('.sc-launchpad-item');
 			let qaItems = JSON.parse(GM_getValue('QuickAccessItems', '[]'));
 			for (let i = 0; i < items.length; i++) {
@@ -759,7 +759,7 @@
 			const result = JSON.parse(str);
 			const type = Object.prototype.toString.call(result);
 			return type === '[object Object]'
-			|| type === '[object Array]';
+				|| type === '[object Array]';
 		} catch (err) {
 			return false;
 		}
