@@ -81,7 +81,7 @@
 	}
 
 	var recognizedDomain = new (function() {
-		let registeredDomains = JSON.parse(GM_getValue('RegisteredDomains', '[]'));
+		let registeredDomains = GM_getJson('RegisteredDomains');
 		let domainSettings = false;
 		let menuCommand = null;
 		this.init = function() {
@@ -125,7 +125,7 @@
 				};
 
 				registeredDomains.push(domainSettings);
-				GM_setValue('RegisteredDomains', JSON.stringify(registeredDomains));
+				GM_setJson('RegisteredDomains', registeredDomains);
 
 				let formElements = q('ul.sc-accountInformation li.form-element');
 				for (let i = 0; i < formElements.length; i++) {
@@ -142,11 +142,11 @@
 			ul.insertBefore(newLi, li);
 		}
 		function forgetDomain() {
-			registeredDomains = JSON.parse(GM_getValue('RegisteredDomains', '[]'));
+			registeredDomains = GM_getJson('RegisteredDomains');
 			let i = registeredDomains.findIndex(d => new RegExp(d.regex).test(location.host));
 			if (i > -1 && confirm(`Are you sure you want forget this ${registeredDomains[i].friendly} domain?\n\n(matched: ${registeredDomains[i].regex})`)) {
 				registeredDomains.splice(i, 1);
-				GM_setValue('RegisteredDomains', JSON.stringify(registeredDomains));
+				GM_setJson('RegisteredDomains', registeredDomains);
 				GM_unregisterMenuCommand(menuCommand);
 				domainSettings = false;
 			}
@@ -477,7 +477,7 @@
 		}
 		this.render = function() {
 			let qaBar = document.getElementById('QuickAccess');
-			let qaItems = JSON.parse(GM_getValue('QuickAccessItems', '[]'));
+			let qaItems = GM_getJson('QuickAccessItems');
 			if (!qaBar || !qaItems) {
 				return;
 			}
@@ -498,7 +498,7 @@
 		}
 		this.initCheckboxes = function() {
 			let items = q('.sc-launchpad-item');
-			let qaItems = JSON.parse(GM_getValue('QuickAccessItems', '[]'));
+			let qaItems = GM_getJson('QuickAccessItems');
 			for (let i = 0; i < items.length; i++) {
 				let item = items[i];
 				item.parentNode.style.position = 'relative';
@@ -518,7 +518,7 @@
 				'imgsrc' : this.nextElementSibling.querySelector('img').getAttribute('src'),
 				'title' : this.nextElementSibling.getAttribute('title')
 			};
-			let qaItems = JSON.parse(GM_getValue('QuickAccessItems', '[]'));
+			let qaItems = GM_getJson('QuickAccessItems');
 			let qaIndex = qaItems.findIndex(qi => qi.href == item.href);
 			if (this.checked) {
 				if (qaIndex == -1) {
@@ -529,7 +529,7 @@
 					qaItems.splice(qaIndex, 1);
 				}
 			}
-			GM_setValue('QuickAccessItems', JSON.stringify(qaItems));
+			GM_setJson('QuickAccessItems', qaItems);
 			_this.render();
 		}
 	})();
@@ -731,6 +731,12 @@
 	init();
 
 	// Helper functions
+	function GM_getJson(key) {
+		return JSON.parse(GM_getValue(key, '[]'));
+	}
+	function GM_setJson(key, value) {
+		GM_setValue(key, JSON.stringify(value));
+	}
 	function searchMutationListFor(mutationList, query) {
 		if (!mutationList.length) {
 			return false;
