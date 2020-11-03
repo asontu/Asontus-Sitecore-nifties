@@ -91,7 +91,7 @@
 			}
 			if (!domainSettings) {
 				if (!loginScreen) {
-				menuCommand = GM_registerMenuCommand("Register domain with user-script", showRegForm, "r");
+					menuCommand = GM_registerMenuCommand("Register domain with user-script", showRegForm, "r");
 				}
 				return ['', '', ''];
 			} else {
@@ -332,7 +332,10 @@
 			};
 			if (!onlyRibbon) {
 				let ids = [];
-				q('img[src*=treemenu_expanded][id]').forEach(i => ids.push(i.id.replace('Tree_Glyph_', '')));
+				let rootFolder = '11111111111111111111111111111111';
+				// This is the ID for the content-folder in Sitecore 8, 9 and 10 for both the Master and Core DB
+				let contentFolder = '0DE95AE441AB4D019EB067441B7C2450';
+				q(`img[src*=treemenu_expanded][id]:not([id$='${rootFolder}']):not([id$='${contentFolder}'])`).forEach(i => ids.push(i.id.replace('Tree_Glyph_', '')));
 				qParams.expandTo = ids.join('!');
 				qParams.scrollTreeTo = document.getElementById('ContentTreeInnerPanel').scrollTop;
 				qParams.scrollPanelTo = document.querySelector('.scEditorPanel').scrollTop;
