@@ -751,11 +751,11 @@
 			if (addedNode.matches(query)) {
 				foundNodes.push(addedNode);
 			}
-			foundNodes = foundNodes.concat(toArr(addedNode.querySelectorAll(query)));
+			foundNodes = foundNodes.concat(Array.from(addedNode.querySelectorAll(query)));
 		}
 		for (let m = 0; m < mutationList.length; m++) {
 			if (!mutationList[m].addedNodes.length) continue;
-			toArr(mutationList[m].addedNodes)
+			Array.from(mutationList[m].addedNodes)
 				.filter(nod => nod.nodeType == 1)
 				.forEach(findNodes);
 		}
@@ -788,10 +788,7 @@
 		return location.pathname.match(new RegExp(regEsc(url), 'i'));
 	}
 	function q(query) {
-		return toArr(document.querySelectorAll(query));
-	}
-	function toArr(nodeList) {
-		return Array.from(nodeList);
+		return Array.from(document.querySelectorAll(query));
 	}
 	function prepForQuery(inp) {
 		return inp + (inp.indexOf('?') > -1 ? '&' : '?');
