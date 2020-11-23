@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Asontu's Sitecore nifties
 // @namespace    https://asontu.github.io/
-// @version      6.2.9b
+// @version      6.3
 // @description  Add environment info to Sitecore header, extend functionality
 // @author       Herman Scheele
 // @grant        GM_setValue
@@ -37,6 +37,9 @@
 	var globalLogo;
 
 	function init() {
+		if (isPage('/sitecore/shell/default.aspx') && location.search == '?xmlcontrol=CustomizeRibbon') {
+			customRibbonExchange.init();
+		}
 		globalLogo = headerInfo.detectGlobalLogo();
 		if (!globalLogo) {
 			// we're inside some non-Ribbon iframe we don't care about, exit
@@ -733,6 +736,75 @@
 		}
 	})();
 
+	var customRibbonExchange = new (function() {
+		var customizeGuid = '{D33A0641-9F1C-4984-8342-0655C3D0F123}';
+		this.init = function() {
+			let applyButton = document.createElement('button');
+				applyButton.className = 'scButton';
+				applyButton.type = 'button';
+				applyButton.innerText = 'Apply';
+			let buttonHolder = document.querySelector('.footerOkCancel');
+			buttonHolder.insertBefore(applyButton, buttonHolder.firstElementChild);
+
+			let ribbonInput = document.createElement('input');
+				ribbonInput.style.display = 'inline-block';
+				ribbonInput.style.width = 'calc(100vw - 300px)';
+				ribbonInput.style.marginRight = '1em';
+			buttonHolder.insertBefore(ribbonInput, applyButton);
+
+			ribbonInput.onfocus = function() {
+				this.value = getCurrentRibbon().join('|');
+				this.select();
+			}
+			applyButton.onclick = function() {
+				getCurrentRibbon()
+					.filter(guid => guid != customizeGuid)
+					.map(guid => () => act(() => removeItem(guid), document.querySelector(`#TreeList_selected`)))
+					.concat([() => expandAll()])
+					.concat(ribbonInput.value
+						.split('|')
+						.filter(guid => guid != customizeGuid)
+						.map(guid => () => act(() => addItem(guid), document.querySelector(`#TreeList_selected`).parentElement)))
+					.reduce((prom, fn) => prom.then(fn), Promise.resolve());
+			}
+		}
+
+		function getCurrentRibbon() {
+			return q('#TreeList_selected option').map(o => o.value.substring(o.value.indexOf('|')+1));
+		}
+
+		function expandAll() {
+			return new Promise((resolve, reject) => {
+				let imgs = q('div[id^=TreeList_all_] img[src*=treemenu_collapsed]');
+				if (!imgs.length) {
+					resolve();
+					return;
+				}
+				new MutationObserver((mutationList, observer) => {
+					if (document.getElementById('TreeList_all').querySelector('img[src*=treemenu_collapsed], img[src*=spinner]')) {
+						return;
+					}
+					observer.disconnect();
+					resolve();
+				}).observe(document.getElementById('TreeList_all'), {attributes:true, childList: true, subtree: true});
+				imgs.forEach(img => img.click());
+			});
+		}
+
+		var dblClickEvent = document.createEvent('MouseEvents');
+		dblClickEvent.initMouseEvent('dblclick', true, true);
+		function addItem(decoratedGuid) {
+			document.querySelector(`#TreeList_all_${decoratedGuid.replace(/[^A-F0-9]/g, '')} a`).click();
+			document.querySelector(`#TreeList_all_${decoratedGuid.replace(/[^A-F0-9]/g, '')} a`).dispatchEvent(dblClickEvent);
+		}
+
+		function removeItem(decoratedGuid) {
+			let select = document.querySelector(`#TreeList_selected`);
+			select.selectedIndex = select.querySelector(`option[value$="${decoratedGuid}"]`).index;
+			select.dispatchEvent(dblClickEvent);
+		}
+	})();
+
 	init();
 
 	// Helper functions
@@ -742,12 +814,38 @@
 	function GM_setJson(key, value) {
 		GM_setValue(key, JSON.stringify(value));
 	}
+	function act(trigger, watch, query, options, timeout) {
+		return new Promise((resolve, reject) => {
+			let timer;
+			let observer = new MutationObserver((mutationList) => {
+				let any = searchMutationListFor(mutationList, query || '*');
+				if (query && !any) {
+					return;
+				}
+				observer.disconnect();
+				clearTimeout(timer);
+				resolve(any);
+			});
+			observer.observe(watch, options || {attributes:false, childList: true, subtree: false});
+			if (timeout) {
+				timer = setTimeout(() => {
+					observer.disconnect();
+					reject(new Error('Timed out observing mutation after acting'));
+				}, timeout);
+			}
+			if (trigger()) {
+				observer.disconnect();
+				clearTimeout(timer);
+				resolve([]);
+			}
+		});
+	}
 	function searchMutationListFor(mutationList, query) {
 		if (!mutationList.length) {
 			return false;
 		}
 		let foundNodes = [];
-		let findNodes = function(addedNode) {
+		function findNodes(addedNode) {
 			if (addedNode.matches(query)) {
 				foundNodes.push(addedNode);
 			}
