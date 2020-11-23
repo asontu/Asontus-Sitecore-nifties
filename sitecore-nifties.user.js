@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Asontu's Sitecore nifties
 // @namespace    https://asontu.github.io/
-// @version      6.3
+// @version      6.3.1
 // @description  Add environment info to Sitecore header, extend functionality
 // @author       Herman Scheele
 // @grant        GM_setValue
@@ -775,13 +775,14 @@
 
 		function expandAll() {
 			return new Promise((resolve, reject) => {
-				let imgs = q('div[id^=TreeList_all_] img[src*=treemenu_collapsed]');
+                let imgSelector = '#TreeList_all > div > div > img[src*=treemenu_collapsed], #TreeList_all > div > div > img[src*=spinner]';
+				let imgs = q(imgSelector);
 				if (!imgs.length) {
 					resolve();
 					return;
 				}
 				new MutationObserver((mutationList, observer) => {
-					if (document.getElementById('TreeList_all').querySelector('img[src*=treemenu_collapsed], img[src*=spinner]')) {
+					if (document.getElementById('TreeList_all').querySelector(imgSelector)) {
 						return;
 					}
 					observer.disconnect();
