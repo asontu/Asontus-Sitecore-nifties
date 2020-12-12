@@ -11,6 +11,7 @@ A Userscript for Tampermonkey (etc.) that adds some nifty functionality to the S
   - [Stay at the bottom when opening items](#stay-at-the-bottom-when-opening-items)
   - [Quickly scroll to the opened item](#quickly-scroll-to-the-opened-item)
   - [Open form in content editor](#open-form-in-content-editor)
+  - [Export and import My Toolbar customization](#export-and-import-my-toolbar-customization)
 - [Installation](#installation)
 
 Features:
@@ -65,6 +66,12 @@ When you're editing a form and you wanna quickly open it in the Content Editor, 
 When you're in the overview of all your forms, pencils are added to both the form as well as the pages where the form is currently used. Use these to quickly go there in the content editor:
 
 ![Open form or page containing form in Content Editor](./assets/forms-overview-pencils.gif)
+
+### Export and import My Toolbar customization
+
+If you add buttons to Sitecore's "My Toolbar", you can copy it as a list of GUID's and import it in another Sitecore instance.
+
+![Migrate My Toolbar between Sitecore instances](./assets/my-ribbon-exchange.gif)
 
 Installation
 ------------
