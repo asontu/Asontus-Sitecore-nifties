@@ -334,15 +334,23 @@
 				'ribbonTo' : document.querySelector('.scRibbonNavigatorButtonsActive').id.split('Nav_')[1]
 			};
 			if (!onlyRibbon) {
-				let ids = [];
 				let rootFolder = '11111111111111111111111111111111';
 				// This is the ID for the content-folder in Sitecore 8, 9 and 10 for both the Master and Core DB
 				let contentFolder = '0DE95AE441AB4D019EB067441B7C2450';
-				q(`img[src*=treemenu_expanded][id]:not([id$='${rootFolder}']):not([id$='${contentFolder}'])`).forEach(i => ids.push(i.id.replace('Tree_Glyph_', '')));
+				let ids = q(`img[src*=treemenu_expanded][id]:not([id$='${rootFolder}']):not([id$='${contentFolder}'])`).map(i => i.id.replace('Tree_Glyph_', ''));
 				qParams.expandTo = ids.join('!');
 				qParams.scrollTreeTo = document.getElementById('ContentTreeInnerPanel').scrollTop;
 				qParams.scrollPanelTo = document.querySelector('.scEditorPanel').scrollTop;
-				qParams.clickTo = document.querySelector('a.scContentTreeNodeActive[id]').id.replace('Tree_Node_', '');
+				let toClick = document.querySelector('a.scContentTreeNodeActive[id]');
+				if (toClick) {
+					qParams.clickTo = toClick.id.replace('Tree_Node_', '');
+				} else {
+					let regexMatch = document.querySelector('#__CurrentItem').value.match(/\{[^\}]+\}/);
+					let guid = !regexMatch ? null : regexMatch[0].replace(/[{}-]/g, '');
+					if (guid != null) {
+						qParams.clickTo = guid;
+					}
+				}
 				qParams.langTo = document.querySelector('#scLanguage').value;
 			}
 			dbSwitch.href = prepForQuery(continueQuery) + generateUrlQuery(qParams);
@@ -644,8 +652,10 @@
 			if (contextPane) {
 				formDetailObserver.observe(contextPane, {attributes:false, childList: true, subtree: true});
 			}
-			if (designingForm && search.formId) {
+			if (designingForm) {
+				if (search.formId) {
 				addFormPencil(search.formId, search.lang);
+				}
 				addApplyButton();
 			}
 		}
