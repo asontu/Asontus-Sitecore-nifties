@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Asontu's Sitecore nifties
 // @namespace    https://asontu.github.io/
-// @version      6.3.1
+// @version      6.3.2b
 // @description  Add environment info to Sitecore header, extend functionality
 // @author       Herman Scheele
 // @grant        GM_setValue
@@ -654,7 +654,7 @@
 			}
 			if (designingForm) {
 				if (search.formId) {
-				addFormPencil(search.formId, search.lang);
+					addFormPencil(search.formId, search.lang);
 				}
 				addApplyButton();
 			}
@@ -769,12 +769,12 @@
 			applyButton.onclick = function() {
 				getCurrentRibbon()
 					.filter(guid => guid != customizeGuid)
-					.map(guid => () => act(() => removeItem(guid), document.querySelector(`#TreeList_selected`)))
+					.map(guid => () => removeItem(guid))
 					.concat([() => expandAll()])
 					.concat(ribbonInput.value
 						.split('|')
 						.filter(guid => guid != customizeGuid)
-						.map(guid => () => act(() => addItem(guid), document.querySelector(`#TreeList_selected`).parentElement)))
+						.map(guid => () => addItem(guid)))
 					.reduce((prom, fn) => prom.then(fn), Promise.resolve());
 			}
 		}
@@ -805,14 +805,20 @@
 		var dblClickEvent = document.createEvent('MouseEvents');
 		dblClickEvent.initMouseEvent('dblclick', true, true);
 		function addItem(decoratedGuid) {
-			document.querySelector(`#TreeList_all_${decoratedGuid.replace(/[^A-F0-9]/g, '')} a`).click();
-			document.querySelector(`#TreeList_all_${decoratedGuid.replace(/[^A-F0-9]/g, '')} a`).dispatchEvent(dblClickEvent);
+			return mop(function() {
+				document.querySelector(`#TreeList_all_${decoratedGuid.replace(/[^A-F0-9]/g, '')} a`).click();
+				document.querySelector(`#TreeList_all_${decoratedGuid.replace(/[^A-F0-9]/g, '')} a`).dispatchEvent(dblClickEvent);
+			},
+			document.querySelector(`#TreeList_selected`).parentElement);
 		}
 
 		function removeItem(decoratedGuid) {
-			let select = document.querySelector(`#TreeList_selected`);
-			select.selectedIndex = select.querySelector(`option[value$="${decoratedGuid}"]`).index;
-			select.dispatchEvent(dblClickEvent);
+			return mop(function() {
+				let select = document.querySelector(`#TreeList_selected`);
+				select.selectedIndex = select.querySelector(`option[value$="${decoratedGuid}"]`).index;
+				select.dispatchEvent(dblClickEvent);
+			},
+			document.querySelector(`#TreeList_selected`));
 		}
 	})();
 
@@ -825,7 +831,7 @@
 	function GM_setJson(key, value) {
 		GM_setValue(key, JSON.stringify(value));
 	}
-	function act(trigger, watch, query, options, timeout) {
+	function mop(trigger, watch, query, options, timeout) {
 		return new Promise((resolve, reject) => {
 			let timer;
 			let observer = new MutationObserver((mutationList) => {
@@ -841,7 +847,7 @@
 			if (timeout) {
 				timer = setTimeout(() => {
 					observer.disconnect();
-					reject(new Error('Timed out observing mutation after acting'));
+					reject(new Error('Timed out observing mutation'));
 				}, timeout);
 			}
 			if (trigger()) {
