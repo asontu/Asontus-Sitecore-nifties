@@ -364,7 +364,6 @@
 			}
 			return href;
 		}
-		let expandItemIds = [];
 		this.init = function() {
 			if (desktop && search.continueTo) {
 				// we arrived at the desktop to switch databases and continue where we were
@@ -391,96 +390,106 @@
 				if (search.expandTo) {
 					// show spinner while expanding tree
 					showSpinner();
-					expandItemIds = search.expandTo
+					search.expandTo
 						.split('!')
-						.map(id => `#Tree_Glyph_${id}[src*=treemenu_collapsed]`);
-					// start recursively expanding the content tree
-					expandNext();
+						.map(id => `#Tree_Glyph_${id}[src*=treemenu_collapsed]`)
+						.map(itemId => () => expandTreeNode(itemId))
+						.reduce((prom, fn) => prom.then(fn), Promise.resolve())
+						.then(() => clickTreeNode(search.clickTo))
+						.then((nodes) => openLangMenu(search.langTo, !!nodes.length))
+						.then((nodes) => clickLang(search.langTo, !!nodes.length))
+						.then(() => scrollTree(search.scrollTreeTo))
+						.then(() => scrollPanel(search.scrollPanelTo))
+						.then(() => hideSpinner());
 				}
 				if (search.ribbonTo) {
 					document.querySelector(`[id$=${search.ribbonTo}]`).click();
 				}
 				if (search.guidTo) {
-					document.getElementById('TreeSearch').value = search.guidTo;
-					if (search.langTo) {
-						showSpinner();
-						langMenuObserver.observe(document.getElementById('ContentEditor'), {attributes:false, childList: true, subtree: true});
-					}
-					document.querySelector('.scSearchButton').click();
+					showSpinner();
+					openGuid(search.guidTo)
+						.then(() => openLangMenu(search.langTo, !!search.langTo))
+						.then((nodes) => clickLang(search.langTo, !!nodes.length))
+						.then(() => hideSpinner());
 				}
 			}
 			return true;
 		}
-		let treeObserver = new MutationObserver(expandNext);
-		function expandNext(mutationList) {
-			if (mutationList) {
-				// If there is a mutationList (and thus this function triggered from the MutationObserver)
-				// then check if there are mutationRecords that have expandable <img> nodes somewhere in
-				// their tree by looking for src containing treemenu_collapsed, or clickable nodes by looking
-				// for src containing noexpand. If not then there's nothing to click, wait for the next
-				// MutationObserver come-around.
-				if (!searchMutationListFor(mutationList, 'img[src*=treemenu_collapsed][id],img[src*=noexpand][id]')) {
-					return;
-				}
-			}
-			treeObserver.disconnect();
-			if (expandItemIds.length == 0) {
-				// no more items to expand, now scroll, click and hide the spinner
-				let nodeToClick = document.querySelector(`a#Tree_Node_${search.clickTo}.scContentTreeNodeNormal`);
-				if (nodeToClick) {
-					// click the node to open the item and wait till the item is opened
-					langMenuObserver.observe(document.getElementById('ContentEditor'), {attributes:false, childList: true, subtree: true});
-					nodeToClick.click();
-				} else {
-					// nothing to click, scroll and hide spinner
-					document.getElementById('ContentTreeInnerPanel').scrollTop = search.scrollTreeTo;
-					hideSpinner();
-				}
-				return;
-			}
-			// take next item to click, if it doesn't exist skip, else observe its parent's children and click it.
-			let itemId = expandItemIds.shift();
+
+		function expandTreeNode(itemId) {
 			let item = document.querySelector(itemId);
 			if (!item) {
-				expandNext();
-				return;
+				return new Promise((resolve, reject) => resolve());
 			}
-			treeObserver.observe(item.parentNode, {attributes:false, childList: true, subtree: true});
-			item.click();
+			return mop(function() {
+				item.click();
+			},
+			item.parentNode,
+			'img[src*=treemenu_collapsed][id],img[src*=noexpand][id]',
+			{attributes:false, childList: true, subtree: true});
 		}
-		let langMenuObserver = new MutationObserver(function(mutationList) {
-			if (!searchMutationListFor(mutationList, '#EditorTabs .scEditorHeaderVersionsLanguage')) {
-				return;
-			}
-			// item has opened enough to open Language Menu and scroll to scrollTreeTo position
-			langMenuObserver.disconnect();
-			if (search.scrollTreeTo) {
-				document.getElementById('ContentTreeInnerPanel').scrollTop = search.scrollTreeTo;
-			}
-			if (search.scrollPanelTo) {
-				document.querySelector('.scEditorPanel').scrollTop = search.scrollPanelTo;
-			}
-			if (search.langTo != document.querySelector('#scLanguage').value) {
-				// current language is different than previously selected language, click Language Menu and wait for it to load.
-				let langLink = document.querySelector('.scEditorHeaderVersionsLanguage');
-				langFrameObserver.observe(langLink, {attributes:false, childList: true, subtree: true});
+
+		function clickTreeNode(itemId) {
+			return mop(function() {
+				let nodeToClick = document.querySelector(`a#Tree_Node_${itemId}.scContentTreeNodeNormal`);
+				if (!nodeToClick) {
+					document.getElementById('TreeSearch').value = itemId;
+					return true;
+				}
+				nodeToClick.click();
+			},
+			document.getElementById('ContentEditor'),
+			'#EditorTabs .scEditorHeaderVersionsLanguage',
+			{attributes:false, childList: true, subtree: true});
+		}
+
+		function openLangMenu(langTo, doAct) {
+			let langLink = document.querySelector('.scEditorHeaderVersionsLanguage');
+			return mop(function() {
+				if (!doAct || langTo == document.querySelector('#scLanguage').value) {
+					return true;
+				}
 				setTimeout(function() { langLink.click(); }, 500);
-			} else {
-				// nothing left to do, hide spinner
-				hideSpinner();
+			},
+			langLink,
+			'#Header_Language_Gallery',
+			{attributes:false, childList: true, subtree: true});
+		}
+
+		function clickLang(langTo, doAct) {
+			return new Promise((resolve, reject) => {
+				if (!doAct) {
+					resolve();
+					return;
+				}
+				document.getElementById('Header_Language_Gallery').onload = function() {
+					this.contentWindow.document.querySelector(`div.scMenuPanelItem[onclick*="language=${langTo}"]`).click();
+					resolve();
+				}
+			});
+		}
+
+		function scrollTree(scrollTreeTo) {
+			if (scrollTreeTo > 0) {
+				document.getElementById('ContentTreeInnerPanel').scrollTop = scrollTreeTo;
 			}
-		});
-		let langFrameObserver = new MutationObserver(function(mutationList) {
-			if (!searchMutationListFor(mutationList, '#Header_Language_Gallery')) {
-				return;
+		}
+
+		function scrollPanel(scrollPanelTo) {
+			if (scrollPanelTo > 0) {
+				document.querySelector('.scEditorPanel').scrollTop = scrollPanelTo;
 			}
-			// iframe was placed, when the iframe's document has loaded click the correct language and hide spinner
-			langFrameObserver.disconnect();
-			document.getElementById('Header_Language_Gallery').onload = function() {
-				this.contentWindow.document.querySelector(`div.scMenuPanelItem[onclick*="language=${search.langTo}"]`).click();
-				hideSpinner();
-			}
-		});
+		}
+
+		function openGuid(guidTo) {
+			return mop(function() {
+				document.getElementById('TreeSearch').value = search.guidTo;
+				document.querySelector('.scSearchButton').click();
+			},
+			document.getElementById('ContentEditor'),
+			'#EditorTabs .scEditorHeaderVersionsLanguage',
+			{attributes:false, childList: true, subtree: true});
+		}
 	})();
 
 	var quickAccess = new (function() {
