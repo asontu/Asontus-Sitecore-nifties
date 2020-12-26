@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Asontu's Sitecore nifties
 // @namespace    https://asontu.github.io/
-// @version      6.3.2b
+// @version      6.3.2
 // @description  Add environment info to Sitecore header, extend functionality
 // @author       Herman Scheele
 // @grant        GM_setValue
@@ -53,7 +53,7 @@
 		}
 		let envName, envColor, envAlpha;
 		[envName, envColor, envAlpha] = recognizedDomain.init();
-		headerInfo.repaint(globalLogo, envName, envColor, envAlpha);
+		headerInfo.repaint(globalLogo, envName, envColor, envAlpha, continueFeature.getButtons);
 		if (contentEditor || formsEditor) {
 			languageInfo.init();
 		}
@@ -66,7 +66,7 @@
 
 				globalLogo = headerInfo.detectGlobalLogo();
 				if (globalLogo) {
-					headerInfo.repaint(globalLogo, envName, envColor, envAlpha);
+					headerInfo.repaint(globalLogo, envName, envColor, envAlpha, continueFeature.getButtons);
 				}
 
 				exmObserver.observe(exmPanel, {attributes:false, childList: true, subtree: true});
@@ -162,7 +162,7 @@
 		var _this = this;
 		var headerCol;
 		this.detectGlobalLogo = () => document.querySelector('#globalLogo, .sc-global-logo, .global-logo:not([style]), .logo-wrap img');
-		this.repaint = function(globalLogo, envName, envColor, envAlpha) {
+		this.repaint = function(globalLogo, envName, envColor, envAlpha, buttonsFn) {
 			let logoContainer = globalLogo.parentElement;
 			headerCol = logoContainer.parentElement;
 			// add envName to document title before adding HTML
@@ -205,7 +205,7 @@
 				headerCol.style.maxHeight = '50px';
 
 				let button0, button1, button2;
-				[button0, button1, button2] = continueFeature.getButtons(dbName);
+				[button0, button1, button2] = buttonsFn(dbName);
 				if (button1) { logoContainer.appendChild(button1); }
 				if (button2) { logoContainer.appendChild(button2); }
 				if (button0) {
@@ -294,7 +294,6 @@
 			if (dbName == '' || exm) {
 				return [false, false, false];
 			}
-			let switchTo1 = dbName == 'master' ? 'core' : 'master';
 			let currentHref = '';
 			let continueQuery = '';
 			if (!desktop) {
@@ -306,6 +305,7 @@
 				dbSwitch0.setAttribute('href', currentHref);
 				dbSwitch0.innerHTML = dbName;
 				dbSwitch0.style.color = '#fff';
+			let switchTo1 = dbName == 'master' ? 'core' : 'master';
 			let dbSwitch1 = document.createElement('a');
 				dbSwitch1.setAttribute('href', `/sitecore/shell/default.aspx?sc_content=${switchTo1}${continueQuery}`);
 				dbSwitch1.innerHTML = `${switchTo1}`;
