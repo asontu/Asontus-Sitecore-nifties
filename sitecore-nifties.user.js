@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Asontu's Sitecore nifties
 // @namespace    https://asontu.github.io/
-// @version      6.3.2
+// @version      6.3.3
 // @description  Add environment info to Sitecore header, extend functionality
 // @author       Herman Scheele
 // @grant        GM_setValue
@@ -331,7 +331,7 @@
 			let continueQuery = cleanHref(dbSwitch.href, true,
 				'ribbonTo', 'expandTo', 'scrollTreeTo', 'scrollPanelTo', 'clickTo', 'langTo', 'guidTo');
 			let qParams = {
-				'ribbonTo' : document.querySelector('.scRibbonNavigatorButtonsActive').id.split('Nav_')[1]
+				'ribbonTo' : document.querySelector('.scRibbonNavigatorButtonsContextualActive, .scRibbonNavigatorButtonsActive').id.split('Nav_')[1]
 			};
 			if (!onlyRibbon) {
 				let rootFolder = '11111111111111111111111111111111';
@@ -400,10 +400,10 @@
 						.then((nodes) => clickLang(search.langTo, !!nodes.length))
 						.then(() => scrollTree(search.scrollTreeTo))
 						.then(() => scrollPanel(search.scrollPanelTo))
+						.then(() => clickRibbon(search.ribbonTo))
 						.then(() => hideSpinner());
-				}
-				if (search.ribbonTo) {
-					document.querySelector(`[id$=${search.ribbonTo}]`).click();
+				} else if (search.ribbonTo) {
+					clickRibbon(search.ribbonTo);
 				}
 				if (search.guidTo) {
 					showSpinner();
@@ -479,6 +479,23 @@
 			if (scrollPanelTo > 0) {
 				document.querySelector('.scEditorPanel').scrollTop = scrollPanelTo;
 			}
+		}
+
+		function clickRibbon(ribbonTo) {
+			return new Promise((resolve, reject) => {
+				let ribbon = document.querySelector(`[id$=${search.ribbonTo}]`);
+				if (!ribbonTo || !ribbon) {
+					resolve();
+					return;
+				}
+				new MutationObserver((mutationList, observer) => {
+					if (mutationList.filter(ml => ml.attributeName == 'class').length) {
+						observer.disconnect();
+						resolve();
+					}
+				}).observe(ribbon, {attributes: true, childList: false, subtree: false});
+				ribbon.click();
+			});
 		}
 
 		function openGuid(guidTo) {
