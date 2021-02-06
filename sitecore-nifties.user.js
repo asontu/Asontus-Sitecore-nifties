@@ -37,7 +37,7 @@
 	var globalLogo;
 
 	function init() {
-		if (isPage('/sitecore/shell/default.aspx') && location.search == '?xmlcontrol=CustomizeRibbon') {
+		if (isPage('/sitecore/shell/default.aspx') && location.search === '?xmlcontrol=CustomizeRibbon') {
 			customRibbonExchange.init();
 		}
 		globalLogo = headerInfo.detectGlobalLogo();
@@ -166,7 +166,7 @@
 			let logoContainer = globalLogo.parentElement;
 			headerCol = logoContainer.parentElement;
 			// add envName to document title before adding HTML
-			if (document.title.indexOf(envName) != 0) {
+			if (document.title.indexOf(envName) !== 0) {
 				document.title = envName + ' ' + document.title;
 			}
 			// add html with img of forms-icon that exists since Sitecore 9
@@ -180,7 +180,7 @@
 			}
 			// add currently active database and append next to logo
 			let dbName = findDb();
-			envName = dbName == '' ? envName : `${envName} [<span id="db-name">${dbName}</span>] `;
+			envName = dbName === '' ? envName : `${envName} [<span id="db-name">${dbName}</span>] `;
 			let span = document.createElement('span');
 				span.innerHTML = envName;
 				span.style.fontSize = '2em';
@@ -236,7 +236,7 @@
 			}
 			headerCol.style.overflow = 'hidden';
 			headerCol.style.whiteSpace = 'nowrap';
-			if (headerCol.className == 'col-md-6') {
+			if (headerCol.className === 'col-md-6') {
 				headerCol.className = 'col-xs-6';
 				headerCol.nextElementSibling.className = 'col-xs-6';
 			}
@@ -270,7 +270,7 @@
 		}
 		let langHiddenObserver = new MutationObserver(function(mutationList) {
 			let curLang;
-			if (contentEditor && mutationList.filter(ml => ml.attributeName == 'value').length) {
+			if (contentEditor && mutationList.filter(ml => ml.attributeName === 'value').length) {
 				curLang = document.getElementById('scLanguage').value;
 			} else if (formsEditor && mutationList.filter(ml => ml.target.classList.contains('selected')).length) {
 				curLang = langLabelMap[
@@ -291,7 +291,7 @@
 
 	var continueFeature = new (function() {
 		this.getButtons = function(dbName) {
-			if (dbName == '' || exm) {
+			if (dbName === '' || exm) {
 				return [false, false, false];
 			}
 			let currentHref = '';
@@ -305,7 +305,7 @@
 				dbSwitch0.setAttribute('href', currentHref);
 				dbSwitch0.innerHTML = dbName;
 				dbSwitch0.style.color = '#fff';
-			let switchTo1 = dbName == 'master' ? 'core' : 'master';
+			let switchTo1 = dbName === 'master' ? 'core' : 'master';
 			let dbSwitch1 = document.createElement('a');
 				dbSwitch1.setAttribute('href', `/sitecore/shell/default.aspx?sc_content=${switchTo1}${continueQuery}`);
 				dbSwitch1.innerHTML = `${switchTo1}`;
@@ -313,7 +313,7 @@
 				dbSwitch1.style.fontStyle = 'italic';
 				dbSwitch1.style.fontSize = '1.5em';
 				dbSwitch1.style.marginRight = '.5em';
-			let switchTo2 = dbName == 'web' ? 'core' : 'web';
+			let switchTo2 = dbName === 'web' ? 'core' : 'web';
 			let dbSwitch2 = document.createElement('a');
 				dbSwitch2.setAttribute('href', `/sitecore/shell/default.aspx?sc_content=${switchTo2}${continueQuery}`);
 				dbSwitch2.innerHTML = `${switchTo2} &rarr;`;
@@ -322,8 +322,8 @@
 				dbSwitch2.style.fontSize = '1.5em';
 			if (contentEditor) {
 				dbSwitch0.onmouseover = dbSwitch0.onfocus = function() { setLinkHref(this, false); }
-				dbSwitch1.onmouseover = dbSwitch1.onfocus = function() { setLinkHref(this, [switchTo1, dbName].indexOf('core') != -1); }
-				dbSwitch2.onmouseover = dbSwitch2.onfocus = function() { setLinkHref(this, [switchTo2, dbName].indexOf('core') != -1); }
+				dbSwitch1.onmouseover = dbSwitch1.onfocus = function() { setLinkHref(this, [switchTo1, dbName].indexOf('core') !== -1); }
+				dbSwitch2.onmouseover = dbSwitch2.onfocus = function() { setLinkHref(this, [switchTo2, dbName].indexOf('core') !== -1); }
 			}
 			return [dbSwitch0, dbSwitch1, dbSwitch2];
 		}
@@ -347,7 +347,7 @@
 				} else {
 					let regexMatch = document.querySelector('#__CurrentItem').value.match(/\{[^\}]+\}/);
 					let guid = !regexMatch ? null : regexMatch[0].replace(/[{}-]/g, '');
-					if (guid != null) {
+					if (guid !== null) {
 						qParams.clickTo = guid;
 					}
 				}
@@ -446,7 +446,7 @@
 		function openLangMenu(langTo, doAct) {
 			let langLink = document.querySelector('.scEditorHeaderVersionsLanguage');
 			return mop(function() {
-				if (!doAct || langTo == document.querySelector('#scLanguage').value) {
+				if (!doAct || langTo === document.querySelector('#scLanguage').value) {
 					return true;
 				}
 				setTimeout(function() { langLink.click(); }, 500);
@@ -489,7 +489,7 @@
 					return;
 				}
 				new MutationObserver((mutationList, observer) => {
-					if (mutationList.filter(ml => ml.attributeName == 'class').length) {
+					if (mutationList.filter(ml => ml.attributeName === 'class').length) {
 						observer.disconnect();
 						resolve();
 					}
@@ -526,7 +526,7 @@
 			qaBar.innerHTML = '';
 			for (let i = 0; i < qaItems.length; i++) {
 				let imgSrc = qaItems[i].imgsrc;
-				let onErrorSrc = imgSrc.indexOf('/-/') == 0
+				let onErrorSrc = imgSrc.indexOf('/-/') === 0
 					? imgSrc.substring(2)
 					: `/-${imgSrc}`;
 				let qaItem = document.createElement('a');
@@ -546,7 +546,7 @@
 				item.parentNode.style.position = 'relative';
 				let chck = document.createElement('input');
 					chck.setAttribute('type', 'checkbox');
-					chck.checked = qaItems.findIndex(qi => qi.href == item.getAttribute('href')) != -1;
+					chck.checked = qaItems.findIndex(qi => qi.href === item.getAttribute('href')) !== -1;
 					chck.style.position = 'absolute';
 					chck.style.top = '12px';
 					chck.style.zIndex = '1';
@@ -561,13 +561,13 @@
 				'title' : this.nextElementSibling.getAttribute('title')
 			};
 			let qaItems = GM_getJson('QuickAccessItems');
-			let qaIndex = qaItems.findIndex(qi => qi.href == item.href);
+			let qaIndex = qaItems.findIndex(qi => qi.href === item.href);
 			if (this.checked) {
-				if (qaIndex == -1) {
+				if (qaIndex === -1) {
 					qaItems.push(item);
 				}
 			} else {
-				if (qaIndex != -1) {
+				if (qaIndex !== -1) {
 					qaItems.splice(qaIndex, 1);
 				}
 			}
@@ -618,11 +618,11 @@
 			}, 200);
 		});
 		let searchObserver = new MutationObserver(function(mutationList) {
-			if (!mutationList.filter(ml => ml.attributeName == 'style').length) {
+			if (!mutationList.filter(ml => ml.attributeName === 'style').length) {
 				return;
 			}
-			if (document.getElementById('SearchResultHolder').style.display != 'none'
-				&& document.querySelectorAll('#SearchResult .scSearchLink').length == 1) {
+			if (document.getElementById('SearchResultHolder').style.display !== 'none'
+				&& document.querySelectorAll('#SearchResult .scSearchLink').length === 1) {
 				searchScrollObserver.observe(document.getElementById('ContentTreeActualSize'), {attributes:false, childList: true, subtree: true});
 				document.querySelector('#SearchHeader .scElementHover').click();
 			}
@@ -649,13 +649,13 @@
 			(function(open) {
 				XMLHttpRequest.prototype.open = function() {
 					this.addEventListener("readystatechange", function() {
-						if (this.readyState != 4
-							|| (!designingForm && (this.responseURL.indexOf('/sitecore/api/ssc/forms/formdesign/formdesign/details?formId=') == -1 || !hasJsonStructure(this.responseText)))
-							|| (designingForm && this.responseURL.indexOf('/sitecore/api/ssc/forms/formdesign/formdesign/save?sc_formmode=new') == -1)) {
+						if (this.readyState !== 4
+							|| (!designingForm && (this.responseURL.indexOf('/sitecore/api/ssc/forms/formdesign/formdesign/details?formId=') === -1 || !hasJsonStructure(this.responseText)))
+							|| (designingForm && this.responseURL.indexOf('/sitecore/api/ssc/forms/formdesign/formdesign/save?sc_formmode=new') === -1)) {
 							return;
 						}
 						let response = JSON.parse(this.responseText);
-						if (!designingForm && response.length == 0) {
+						if (!designingForm && response.length === 0) {
 							lastResponse = [{
 								formId: decodeURIComponent(this.responseURL.split(/\?|&/).filter(q => q.indexOf('formId=') > -1)[0].split('=')[1]),
 								id: '',
@@ -696,7 +696,7 @@
 				if (langLabel) {
 					query['langTo'] = langLabel.innerText;
 				}
-				if (i == 0) {
+				if (i === 0) {
 					query['guidTo'] = lastResponse[i].formId;
 					let pathSpan = q('[data-sc-id="LocationValue"]')[0];
 					let pathParent = pathSpan.parentNode;
@@ -743,7 +743,7 @@
 		var applyButton;
 		var saveUponDisable = false;
 		let propsBarObserver = new MutationObserver(function() {
-			applyButton.disabled = document.querySelector('[data-sc-id=ContextForPropertyGrid]').style.display == 'none';
+			applyButton.disabled = document.querySelector('[data-sc-id=ContextForPropertyGrid]').style.display === 'none';
 			if (saveUponDisable) {
 				document.querySelector('[data-sc-id=SaveButton]').click();
 				saveUponDisable = false;
@@ -794,12 +794,12 @@
 			}
 			applyButton.onclick = function() {
 				getCurrentRibbon()
-					.filter(guid => guid != customizeGuid)
+					.filter(guid => guid !== customizeGuid)
 					.map(guid => () => removeItem(guid))
 					.concat([() => expandAll()])
 					.concat(ribbonInput.value
 						.split('|')
-						.filter(guid => guid != customizeGuid)
+						.filter(guid => guid !== customizeGuid)
 						.map(guid => () => addItem(guid)))
 					.reduce((prom, fn) => prom.then(fn), Promise.resolve());
 			}
@@ -897,7 +897,7 @@
 		for (let m = 0; m < mutationList.length; m++) {
 			if (!mutationList[m].addedNodes.length) continue;
 			Array.from(mutationList[m].addedNodes)
-				.filter(nod => nod.nodeType == 1)
+				.filter(nod => nod.nodeType === 1)
 				.forEach(findNodes);
 		}
 		if (!foundNodes.length) {
@@ -955,24 +955,24 @@
 		}
 
 		let dbNameDiv = document.querySelector('#DatabaseName, #DatabaseSelector, .scDatabaseName');
-		if (dbNameDiv != null && dbNameDiv.innerText.trim() != '') {
+		if (dbNameDiv !== null && dbNameDiv.innerText.trim() !== '') {
 			return dbNameDiv.innerText.trim();
 		}
 		let locMatch = location.search.match(/database=(\w+)/);
-		if (ribbon && locMatch != null) {
+		if (ribbon && locMatch !== null) {
 			return locMatch[1];
 		}
 		let meta = document.querySelector('meta[data-sc-name=sitecoreContentDatabase]');
-		if (meta != null) {
+		if (meta !== null) {
 			return meta.getAttribute('data-sc-content');
 		}
 		let curEl = document.getElementById('__CurrentItem');
-		let match = curEl == null ? null : curEl.value.match(/sitecore:\/\/(\w+)/);
-		if (match != null) {
+		let match = curEl === null ? null : curEl.value.match(/sitecore:\/\/(\w+)/);
+		if (match !== null) {
 			return match[1];
 		}
 		let iframe = document.querySelector('iframe[src*="db="]');
-		let regexMatch = iframe == null ? null : iframe.src.match(/db=(\w+)/);
+		let regexMatch = iframe === null ? null : iframe.src.match(/db=(\w+)/);
 		if (regexMatch) {
 			return regexMatch[1];
 		}
