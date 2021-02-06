@@ -52,7 +52,7 @@
 			return;
 		}
 		let envName, envColor, envAlpha;
-		[envName, envColor, envAlpha] = recognizedDomain.init();
+		[envName, envColor, envAlpha] = recognizedDomain.init(headerInfo.setHeaderColor);
 		headerInfo.repaint(globalLogo, envName, envColor, envAlpha, continueFeature.getButtons);
 		if (contentEditor || formsEditor) {
 			languageInfo.init();
@@ -87,7 +87,9 @@
 		let registeredDomains = GM_getJson('RegisteredDomains');
 		let domainSettings = false;
 		let menuCommand = null;
-		this.init = function() {
+		let colorsFn = null;
+		this.init = function(headerColorsFn) {
+			colorsFn = headerColorsFn;
 			let domIndex = registeredDomains.findIndex(d => new RegExp(d.regex).test(location.host));
 			if (domIndex > -1) {
 				domainSettings = registeredDomains[domIndex];
@@ -114,11 +116,11 @@
 			addRegFormElement(ul, li, `<button type="button" style="line-height: initial; color: #000;">Save</button>`);
 
 			ul.querySelector('#domainColor').onchange = function() {
-				headerInfo.setHeaderColor(this.value, ul.querySelector('#domainAlpha').value);
+				colorsFn(this.value, ul.querySelector('#domainAlpha').value);
 			}
 
 			ul.querySelector('#domainAlpha').onchange = function() {
-				headerInfo.setHeaderColor(ul.querySelector('#domainColor').value, this.value);
+				colorsFn(ul.querySelector('#domainColor').value, this.value);
 			}
 
 			ul.querySelector('button').onclick = function() {
