@@ -105,11 +105,11 @@
 			addRegFormElement(ul, li, `<input type="range" id="domainAlpha" title="Transparency for the header color" min="0" max="1" step=".1" value=".5" style="width: 100px;transform: rotate(-90deg) translate(-40px);display: inline-block;margin: 0 -45px;">`);
 			addRegFormElement(ul, li, `<button type="button" style="line-height: initial; color: #000;">Save</button>`);
 
-			ul.querySelector('#domainColor').onchange = function() {
+			ul.querySelector('#domainColor').oninput = function() {
 				colorsFn(this.value, ul.querySelector('#domainAlpha').value);
 			}
 
-			ul.querySelector('#domainAlpha').onchange = function() {
+			ul.querySelector('#domainAlpha').oninput = function() {
 				colorsFn(ul.querySelector('#domainColor').value, this.value);
 			}
 
