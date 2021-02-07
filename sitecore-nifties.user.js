@@ -14,7 +14,9 @@
 (function() {
 	'use strict';
 	// Constants and globals
-	const exm = isPage('/sitecore/shell/client/Applications/ECM');
+	const exm91 = isPage('/sitecore/shell/client/Applications/ECM/Pages');
+	const exm93 = !exm91 && isPage('/sitecore/shell/client/Applications/ECM');
+	const exm = exm91 || exm93;
 	const ribbon = isPage('ribbon.aspx');
 	const desktop = isPage('/sitecore/shell/default.aspx');
 	const launchPad = isPage('/sitecore/client/applications/launchpad');
@@ -43,13 +45,13 @@
 		let envName, envColor, envAlpha;
 		[envName, envColor, envAlpha] = recognizedDomain.init(headerInfo.setHeaderColor);
 		headerInfo.repaint(globalLogo, envName, envColor, envAlpha, continueFeature.getButtons);
-		if (contentEditor || formsEditor || exm) {
+		if (contentEditor || formsEditor || exm93) {
 			languageInfo.init();
 		}
 		if (launchPad) {
 			quickAccess.initCheckboxes();
 		}
-		if (exm) {
+		if (exm93) {
 			var exmObserver = new MutationObserver(function() {
 				exmObserver.disconnect();
 
@@ -167,7 +169,7 @@
 					: `<img src="/-/temp/iconcache/apps/48x48/forms.png?uniq=${Date.now()}" style="display: none" onerror="this.outerHTML=8" onload="this.outerHTML=9"> `)
 				+ envName;
 			// add language
-			if (contentEditor || formsEditor || exm) {
+			if (contentEditor || formsEditor || exm93) {
 				envName = `${envName} (<span id="showLang"><i>loading...</i></span>)`;
 			}
 			// add currently active database and append next to logo
@@ -190,7 +192,7 @@
 
 			if (!loginScreen) {
 				globalLogo.style.float = 'left';
-				if (!exm) {
+				if (!exm93) {
 					globalLogo.style.marginTop = '8.5px';
 				}
 				span.style.paddingLeft = '1em';
@@ -280,13 +282,13 @@
 			} else if (formsEditor) {
 				// observe to update language and flag
 				langHiddenObserver.observe(document.querySelector('div[data-sc-id=LanguageListControl] .sc-listcontrol-content'), {attributes:true, childList: false, subtree: true});
-			} else if (exm && document.querySelector('exm-language-switcher > sc-dropdown > button')) {
+			} else if (exm93 && document.querySelector('exm-language-switcher > sc-dropdown > button')) {
 				rightCol.style.backgroundPositionX = '50%';
 				if (document.querySelector('exm-language-switcher > sc-dropdown > button').innerText.trim() !== '') {
 					updateLang([]);
 				}
 				langHiddenObserver.observe(document.querySelector('exm-language-switcher > sc-dropdown > button').parentElement, {characterData:true, childList: true, subtree: true});
-			} else if (exm) {
+			} else if (exm93) {
 				document.getElementById('showLang').innerHTML = 'N/A';
 			}
 		}
@@ -297,7 +299,7 @@
 				curLang = document.getElementById('scLanguage').value;
 			} else if (formsEditor && mutationList.filter(ml => ml.target.classList.contains('selected')).length) {
 				curLang = getLangFrom('div[data-sc-id=LanguageListControl] .selected');
-			} else if (exm) {
+			} else if (exm93) {
 				curLang = getLangFrom('exm-language-switcher > sc-dropdown > button');
 			} else {
 				return;
