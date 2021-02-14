@@ -489,16 +489,17 @@
 		}
 
 		function clickLang(langTo, doAct) {
-			return new Promise((resolve, reject) => {
+			return mop(function() {
 				if (!doAct) {
-					resolve();
-					return;
+					return true;
 				}
 				document.getElementById('Header_Language_Gallery').onload = function() {
 					this.contentWindow.document.querySelector(`div.scMenuPanelItem[onclick*="language=${langTo}"]`).click();
-					resolve();
 				}
-			});
+			},
+			document.getElementById('EditorFrames'),
+			'.scEditorPanel',
+			{attributes:false, childList: true, subtree: true});
 		}
 
 		function scrollTree(scrollTreeTo) {
@@ -515,7 +516,7 @@
 
 		function clickRibbon(ribbonTo) {
 			return new Promise((resolve, reject) => {
-				let ribbon = document.querySelector(`[id$=${search.ribbonTo}]`);
+				let ribbon = document.querySelector(`[id$=${ribbonTo}]`);
 				if (!ribbonTo || !ribbon) {
 					resolve();
 					return;
@@ -527,6 +528,7 @@
 					}
 				}).observe(ribbon, {attributes: true, childList: false, subtree: false});
 				ribbon.click();
+				setTimeout(function() { ribbon.click() }, 100);
 			});
 		}
 
