@@ -322,6 +322,9 @@
 	})();
 
 	var continueFeature = new (function() {
+		let rootFolder = '11111111111111111111111111111111';
+		// This is the ID for the content-folder in Sitecore 8, 9 and 10 for both the Master and Core DB
+		let contentFolder = '0DE95AE441AB4D019EB067441B7C2450';
 		this.getButtons = function(dbName) {
 			if (dbName === '' || exm) {
 				return [false, false, false];
@@ -366,11 +369,9 @@
 				'ribbonTo' : document.querySelector('.scRibbonNavigatorButtonsContextualActive, .scRibbonNavigatorButtonsActive').id.split('Nav_')[1]
 			};
 			if (!onlyRibbon) {
-				let rootFolder = '11111111111111111111111111111111';
-				// This is the ID for the content-folder in Sitecore 8, 9 and 10 for both the Master and Core DB
-				let contentFolder = '0DE95AE441AB4D019EB067441B7C2450';
-				let ids = q(`img[src*=treemenu_expanded][id]:not([id$='${rootFolder}']):not([id$='${contentFolder}'])`).map(i => i.id.replace('Tree_Glyph_', ''));
-				qParams.expandTo = ids.join('!');
+				qParams.expandTo = q(`img[src*=treemenu_expanded][id]:not([id$='${rootFolder}']):not([id$='${contentFolder}'])`)
+					.map(i => i.id.replace('Tree_Glyph_', ''))
+					.join('!');
 				qParams.scrollTreeTo = document.getElementById('ContentTreeInnerPanel').scrollTop;
 				qParams.scrollPanelTo = document.querySelector('.scEditorPanel').scrollTop;
 				let toClick = document.querySelector('a.scContentTreeNodeActive[id]');
@@ -422,8 +423,8 @@
 				if (search.expandTo) {
 					// show spinner while expanding tree
 					showSpinner();
-					search.expandTo
-						.split('!')
+					[rootFolder, contentFolder]
+						.concat(search.expandTo.split('!'))
 						.map(id => `#Tree_Glyph_${id}[src*=treemenu_collapsed]`)
 						.map(itemId => () => expandTreeNode(itemId))
 						.reduce((prom, fn) => prom.then(fn), Promise.resolve())
