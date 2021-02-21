@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Asontu's Sitecore nifties
 // @namespace    https://asontu.github.io/
-// @version      6.4b
+// @version      6.4
 // @description  Add environment info to Sitecore header, extend functionality
 // @author       Herman Scheele
 // @grant        GM_setValue
@@ -667,7 +667,10 @@
 			}
 			setTimeout(function() {
 				let tree = document.getElementById('ContentTreeInnerPanel');
-				tree.scrollTop = Math.min(maxScroll, tree.scrollHeight - tree.clientHeight);
+				let scrollTo = Math.min(maxScroll, tree.scrollHeight - tree.clientHeight);
+				if (scrollTo > tree.scrollTop) {
+					tree.scrollTop = scrollTo;
+				}
 			}, 200);
 		});
 		let searchObserver = new MutationObserver(function(mutationList) {
