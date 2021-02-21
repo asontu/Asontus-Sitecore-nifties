@@ -101,10 +101,21 @@
 			if (!ul) { return; }
 			let li = ul.querySelector('li');
 
-			addRegFormElement(ul, li, `<input type="text" id="domainRegex" placeholder="Domain regex" title="The regex to recognize this domain/environment" value="^${regEsc(location.host)}$" style="display: inline-block;max-width: 80%; line-height: initial; color: #000;">`);
-			addRegFormElement(ul, li, `<input type="text" id="domainFriendlyName" placeholder="Friendly name" title="Friendly name for this domain, will be placed in header and title" style="display: inline-block;width: 80%; line-height: initial; color: #000;">`);
-			addRegFormElement(ul, li, `<input type="color" id="domainColor" title="Color to give the header on this domain" value="#2b2b2b">`);
-			addRegFormElement(ul, li, `<input type="range" id="domainAlpha" title="Transparency for the header color" min="0" max="1" step=".1" value=".5" style="width: 100px;transform: rotate(-90deg) translate(-40px);display: inline-block;margin: 0 -45px;">`);
+			addRegFormElement(ul, li,
+				`<input type="text" id="domainRegex" placeholder="Domain regex" value="^${regEsc(location.host)}$"
+						title="The regex to recognize this domain/environment"
+						style="display: inline-block;max-width: 80%; line-height: initial; color: #000;">`);
+			addRegFormElement(ul, li,
+				`<input type="text" id="domainTitle" placeholder="Friendly name"
+						title="Friendly name for this domain, will be placed in header and title"
+						style="display: inline-block;width: 80%; line-height: initial; color: #000;">`);
+			addRegFormElement(ul, li,
+				`<input type="color" id="domainColor"
+						title="Color to give the header on this domain" value="#2b2b2b">`);
+			addRegFormElement(ul, li,
+				`<input type="range" id="domainAlpha" min="0" max="1" step=".1" value=".5"
+						title="Transparency for the header color"
+						style="width: 100px;transform: rotate(-90deg) translate(-40px);display: inline-block;margin: 0 -45px;">`);
 			addRegFormElement(ul, li, `<button type="button" style="line-height: initial; color: #000;">Save</button>`);
 
 			ul.querySelector('#domainColor').oninput = function() {
@@ -118,7 +129,7 @@
 			ul.querySelector('button').onclick = function() {
 				domainSettings = {
 					regex : ul.querySelector('#domainRegex').value,
-					friendly : ul.querySelector('#domainFriendlyName').value,
+					friendly : ul.querySelector('#domainTitle').value,
 					color : ul.querySelector('#domainColor').value,
 					alpha : ul.querySelector('#domainAlpha').value
 				};
@@ -284,18 +295,18 @@
 				langHiddenObserver.observe(document.getElementById('scLanguage'), {attributes: true, childList: false, subtree: false});
 			} else if (formsEditor) {
 				// observe to update language and flag
-				langHiddenObserver.observe(document.querySelector('div[data-sc-id=LanguageListControl] .sc-listcontrol-content'), {attributes:true, childList: false, subtree: true});
+				langHiddenObserver.observe(document.querySelector('div[data-sc-id=LanguageListControl] .sc-listcontrol-content'), {attributes: true, childList: false, subtree: true});
 			} else if (exm91 && document.querySelector(exm91Button)) {
 				if (document.querySelector(exm91Button).innerText.trim() !== '') {
 					updateLang([]);
 				}
-				langHiddenObserver.observe(document.querySelector(exm91Button), {characterData:true, childList: true, subtree: true});
+				langHiddenObserver.observe(document.querySelector(exm91Button), {characterData: true, childList: true, subtree: true});
 			} else if (exm93 && document.querySelector(exm93Button)) {
 				rightCol.style.backgroundPositionX = '50%';
 				if (document.querySelector(exm93Button).innerText.trim() !== '') {
 					updateLang([]);
 				}
-				langHiddenObserver.observe(document.querySelector(exm93Button).parentElement, {characterData:true, childList: true, subtree: true});
+				langHiddenObserver.observe(document.querySelector(exm93Button).parentElement, {characterData: true, childList: true, subtree: true});
 			} else if (exm) {
 				document.getElementById('showLang').innerHTML = 'N/A';
 			}
@@ -607,14 +618,11 @@
 			};
 			let qaItems = GM_getJson('QuickAccessItems');
 			let qaIndex = qaItems.findIndex(qi => qi.href === item.href);
-			if (this.checked) {
-				if (qaIndex === -1) {
-					qaItems.push(item);
-				}
-			} else {
-				if (qaIndex !== -1) {
-					qaItems.splice(qaIndex, 1);
-				}
+			if (this.checked && qaIndex === -1) {
+				qaItems.push(item);
+			}
+			if (!this.checked && qaIndex !== -1) {
+				qaItems.splice(qaIndex, 1);
 			}
 			GM_setJson('QuickAccessItems', qaItems);
 			_this.render();
@@ -640,13 +648,13 @@
 
 				if (nowScrolledToBottom && !wasScrolledToBottom) {
 					wasScrolledToBottom = nowScrolledToBottom;
-					scrollObserver.observe(this, {attributes:false, childList: true, subtree: true})
+					scrollObserver.observe(this, {attributes: false, childList: true, subtree: true})
 				} else if (!nowScrolledToBottom && wasScrolledToBottom) {
 					wasScrolledToBottom = nowScrolledToBottom;
 					scrollObserver.disconnect();
 				}
 			}
-			searchObserver.observe(document.getElementById('SearchResultHolder'), {attributes:true, childList: false, subtree: false});
+			searchObserver.observe(document.getElementById('SearchResultHolder'), {attributes: true, childList: false, subtree: false});
 		}
 		let maxScroll;
 		let scrollObserver = new MutationObserver(function(mutationList) {
@@ -668,7 +676,7 @@
 			}
 			if (document.getElementById('SearchResultHolder').style.display !== 'none'
 				&& document.querySelectorAll('#SearchResult .scSearchLink').length === 1) {
-				searchScrollObserver.observe(document.getElementById('ContentTreeActualSize'), {attributes:false, childList: true, subtree: true});
+				searchScrollObserver.observe(document.getElementById('ContentTreeActualSize'), {attributes: false, childList: true, subtree: true});
 				document.querySelector('#SearchHeader .scElementHover').click();
 			}
 		});
@@ -751,12 +759,14 @@
 					} else {
 						pathParent.style.position = 'relative';
 					}
+					let formPath = pathSpan.innerText.trim();
+					let formName = q('.sc-listcontrol-icon.selected .sc-listcontrol-icon-description a')[0].title;
 					var a = document.createElement('a');
 						a.id = 'formIdLink';
 						a.innerHTML = '<img src="/temp/iconcache/apps/16x16/pencil.png" />';
 						a.setAttribute('href', `/sitecore/shell/Applications/Content%20Editor.aspx?sc_bw=1&${generateUrlQuery(query)}`);
 						a.onclick = function(e) { e.stopPropagation(); };
-						a.setAttribute('title', `Open [${pathSpan.innerText.trim()}/${q('.sc-listcontrol-icon.selected .sc-listcontrol-icon-description a')[0].title}] in the Content Editor`);
+						a.setAttribute('title', `Open [${formPath}/${formName}] in the Content Editor`);
 						a.style.position = 'absolute';
 						a.style.left = '-1em';
 					pathParent.prepend(a);
@@ -877,8 +887,9 @@
 		dblClickEvent.initMouseEvent('dblclick', true, true);
 		function addItem(decoratedGuid) {
 			return mop(function() {
-				document.querySelector(`#TreeList_all_${decoratedGuid.replace(/[^A-F0-9]/g, '')} a`).click();
-				document.querySelector(`#TreeList_all_${decoratedGuid.replace(/[^A-F0-9]/g, '')} a`).dispatchEvent(dblClickEvent);
+				let bareGuid = decoratedGuid.replace(/[^A-F0-9]/g, '');
+				document.querySelector(`#TreeList_all_${bareGuid} a`).click();
+				document.querySelector(`#TreeList_all_${bareGuid} a`).dispatchEvent(dblClickEvent);
 			},
 			document.querySelector(`#TreeList_selected`).parentElement);
 		}
