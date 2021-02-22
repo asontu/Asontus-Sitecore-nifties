@@ -288,11 +288,11 @@
 				rightCol.style.imageRendering = 'crisp-edges'; // Gecko
 				rightCol.style.imageRendering = 'pixelated';   // WebKit/Chromium
 			if (contentEditor) {
-				let curLang = document.getElementById('scLanguage').value;
-				document.getElementById('showLang').innerHTML = curLang;
+				let curLang = document.querySelector('#scLanguage').value;
+				document.querySelector('#showLang').innerHTML = curLang;
 				rightCol.style.backgroundImage = flags[curLang];
 				// observe to update language and flag
-				langHiddenObserver.observe(document.getElementById('scLanguage'), {attributes: true, childList: false, subtree: false});
+				langHiddenObserver.observe(document.querySelector('#scLanguage'), {attributes: true, childList: false, subtree: false});
 			} else if (formsEditor) {
 				// observe to update language and flag
 				langHiddenObserver.observe(document.querySelector('div[data-sc-id=LanguageListControl] .sc-listcontrol-content'), {attributes: true, childList: false, subtree: true});
@@ -308,14 +308,14 @@
 				}
 				langHiddenObserver.observe(document.querySelector(exm93Button).parentElement, {characterData: true, childList: true, subtree: true});
 			} else if (exm) {
-				document.getElementById('showLang').innerHTML = 'N/A';
+				document.querySelector('#showLang').innerHTML = 'N/A';
 			}
 		}
 		let langHiddenObserver = new MutationObserver(updateLang);
 		function updateLang(mutationList) {
 			let curLang;
 			if (contentEditor && mutationList.filter(ml => ml.attributeName === 'value').length) {
-				curLang = document.getElementById('scLanguage').value;
+				curLang = document.querySelector('#scLanguage').value;
 			} else if (formsEditor && mutationList.filter(ml => ml.target.classList.contains('selected')).length) {
 				curLang = getLangFrom('div[data-sc-id=LanguageListControl] .selected');
 			} else if (exm91) {
@@ -326,7 +326,7 @@
 				return;
 			}
 
-			document.getElementById('showLang').innerHTML = curLang;
+			document.querySelector('#showLang').innerHTML = curLang;
 			let rightCol = document.querySelector(headerFlagHolder).parentElement;
 				rightCol.style.backgroundImage = flags[curLang];
 		}
@@ -393,7 +393,7 @@
 				qParams.expandTo = q(`img[src*=treemenu_expanded][id]:not([id$='${rootFolder}']):not([id$='${contentFolder}'])`)
 					.map(i => i.id.replace('Tree_Glyph_', ''))
 					.join('!');
-				qParams.scrollTreeTo = document.getElementById('ContentTreeInnerPanel').scrollTop;
+				qParams.scrollTreeTo = document.querySelector('#ContentTreeInnerPanel').scrollTop;
 				qParams.scrollPanelTo = document.querySelector('.scEditorPanel').scrollTop;
 				let toClick = document.querySelector('a.scContentTreeNodeActive[id]');
 				if (toClick) {
@@ -487,12 +487,12 @@
 			return mop(function() {
 				let nodeToClick = document.querySelector(`a#Tree_Node_${itemId}.scContentTreeNodeNormal`);
 				if (!nodeToClick) {
-					document.getElementById('TreeSearch').value = itemId;
+					document.querySelector('#TreeSearch').value = itemId;
 					return true;
 				}
 				nodeToClick.click();
 			},
-			document.getElementById('ContentEditor'),
+			document.querySelector('#ContentEditor'),
 			'#EditorTabs .scEditorHeaderVersionsLanguage',
 			{attributes:false, childList: true, subtree: true});
 		}
@@ -515,18 +515,18 @@
 				if (!doAct) {
 					return true;
 				}
-				document.getElementById('Header_Language_Gallery').onload = function() {
+				document.querySelector('#Header_Language_Gallery').onload = function() {
 					this.contentWindow.document.querySelector(`div.scMenuPanelItem[onclick*="language=${langTo}"]`).click();
 				}
 			},
-			document.getElementById('EditorFrames'),
+			document.querySelector('#EditorFrames'),
 			'.scEditorPanel',
 			{attributes:false, childList: true, subtree: true});
 		}
 
 		function scrollTree(scrollTreeTo) {
 			if (scrollTreeTo > 0) {
-				document.getElementById('ContentTreeInnerPanel').scrollTop = scrollTreeTo;
+				document.querySelector('#ContentTreeInnerPanel').scrollTop = scrollTreeTo;
 			}
 		}
 
@@ -556,10 +556,10 @@
 
 		function openGuid(guidTo) {
 			return mop(function() {
-				document.getElementById('TreeSearch').value = search.guidTo;
+				document.querySelector('#TreeSearch').value = search.guidTo;
 				document.querySelector('.scSearchButton').click();
 			},
-			document.getElementById('ContentEditor'),
+			document.querySelector('#ContentEditor'),
 			'#EditorTabs .scEditorHeaderVersionsLanguage',
 			{attributes:false, childList: true, subtree: true});
 		}
@@ -574,7 +574,7 @@
 			return qaContainer;
 		}
 		this.render = function() {
-			let qaBar = document.getElementById('QuickAccess');
+			let qaBar = document.querySelector('#QuickAccess');
 			let qaItems = GM_getJson('QuickAccessItems');
 			if (!qaBar || !qaItems) {
 				return;
@@ -643,7 +643,7 @@
 			let newCel = document.querySelector('#SearchPanel tr').insertCell(2);
 				newCel.appendChild(scrollLink);
 			// Add stay-at-bottom event listener
-			document.getElementById('ContentTreeInnerPanel').onscroll = function() {
+			document.querySelector('#ContentTreeInnerPanel').onscroll = function() {
 				const nowScrolledToBottom = this.scrollHeight - this.clientHeight <= this.scrollTop + 10;
 
 				if (nowScrolledToBottom && !wasScrolledToBottom) {
@@ -654,7 +654,7 @@
 					scrollObserver.disconnect();
 				}
 			}
-			searchObserver.observe(document.getElementById('SearchResultHolder'), {attributes: true, childList: false, subtree: false});
+			searchObserver.observe(document.querySelector('#SearchResultHolder'), {attributes: true, childList: false, subtree: false});
 		}
 		let maxScroll;
 		let scrollObserver = new MutationObserver(function(mutationList) {
@@ -666,7 +666,7 @@
 				return;
 			}
 			setTimeout(function() {
-				let tree = document.getElementById('ContentTreeInnerPanel');
+				let tree = document.querySelector('#ContentTreeInnerPanel');
 				let scrollTo = Math.min(maxScroll, tree.scrollHeight - tree.clientHeight);
 				if (scrollTo > tree.scrollTop) {
 					tree.scrollTop = scrollTo;
@@ -677,9 +677,9 @@
 			if (!mutationList.filter(ml => ml.attributeName === 'style').length) {
 				return;
 			}
-			if (document.getElementById('SearchResultHolder').style.display !== 'none'
+			if (document.querySelector('#SearchResultHolder').style.display !== 'none'
 				&& document.querySelectorAll('#SearchResult .scSearchLink').length === 1) {
-				searchScrollObserver.observe(document.getElementById('ContentTreeActualSize'), {attributes: false, childList: true, subtree: true});
+				searchScrollObserver.observe(document.querySelector('#ContentTreeActualSize'), {attributes: false, childList: true, subtree: true});
 				document.querySelector('#SearchHeader .scElementHover').click();
 			}
 		});
@@ -693,7 +693,7 @@
 		function scrollToActive() {
 			let activeNode = document.querySelector('a.scContentTreeNodeActive[id]');
 			if (activeNode) {
-				document.getElementById('ContentTreeInnerPanel').scrollTop = Math.max(0, activeNode.offsetTop - document.getElementById('ContentTreeInnerPanel').offsetHeight/2);
+				document.querySelector('#ContentTreeInnerPanel').scrollTop = Math.max(0, activeNode.offsetTop - document.querySelector('#ContentTreeInnerPanel').offsetHeight/2);
 			}
 		}
 	})();
@@ -756,7 +756,7 @@
 					query['guidTo'] = lastResponse[i].formId;
 					let pathSpan = q('[data-sc-id="LocationValue"]')[0];
 					let pathParent = pathSpan.parentNode;
-					let oldLink = document.getElementById('formIdLink');
+					let oldLink = document.querySelector('#formIdLink');
 					if (oldLink) {
 						pathParent.removeChild(oldLink);
 					} else {
@@ -876,12 +876,12 @@
 					return;
 				}
 				new MutationObserver((mutationList, observer) => {
-					if (document.getElementById('TreeList_all').querySelector(imgSelector)) {
+					if (document.querySelector('#TreeList_all').querySelector(imgSelector)) {
 						return;
 					}
 					observer.disconnect();
 					resolve();
-				}).observe(document.getElementById('TreeList_all'), {attributes:true, childList: true, subtree: true});
+				}).observe(document.querySelector('#TreeList_all'), {attributes:true, childList: true, subtree: true});
 				imgs.forEach(img => img.click());
 			});
 		}
@@ -1025,7 +1025,7 @@
 		if (meta !== null) {
 			return meta.getAttribute('data-sc-content');
 		}
-		let curEl = document.getElementById('__CurrentItem');
+		let curEl = document.querySelector('#__CurrentItem');
 		let match = curEl === null ? null : curEl.value.match(/sitecore:\/\/(\w+)/);
 		if (match !== null) {
 			return match[1];
