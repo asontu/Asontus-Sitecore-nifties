@@ -448,8 +448,8 @@
 					showSpinner();
 					[rootFolder, contentFolder]
 						.concat(search.expandTo.split('!'))
-						.map(id => `#Tree_Glyph_${id}[src*=treemenu_collapsed]`)
-						.map(itemId => () => expandTreeNode(itemId))
+						.map(itemGuid => `#Tree_Glyph_${itemGuid}[src*=treemenu_collapsed]`)
+						.map(itemSelector => () => expandTreeNode(itemSelector))
 						.reduce((prom, fn) => prom.then(fn), Promise.resolve())
 						.then(() => clickTreeNode(search.clickTo))
 						.then((nodes) => openLangMenu(search.langTo, !!nodes.length))
@@ -472,8 +472,8 @@
 			return true;
 		}
 
-		function expandTreeNode(itemId) {
-			let item = document.querySelector(itemId);
+		function expandTreeNode(itemSelector) {
+			let item = document.querySelector(itemSelector);
 			if (!item) {
 				return new Promise((resolve, reject) => resolve());
 			}
@@ -573,6 +573,8 @@
 			let qaContainer = document.createElement('div');
 				qaContainer.id = 'QuickAccess';
 				qaContainer.style.float = 'right';
+				qaContainer.style.imageRendering = 'auto'; // Gecko
+				qaContainer.style.imageRendering = '-webkit-optimize-contrast';   // WebKit/Chromium
 			return qaContainer;
 		}
 		this.render = function() {
