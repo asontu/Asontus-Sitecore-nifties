@@ -169,7 +169,12 @@
 		this.detectGlobalLogo = () => document.querySelector('#globalLogo, .sc-global-logo, .global-logo:not([style]), .logo-wrap img');
 		this.repaint = function(globalLogo, envName, envColor, envAlpha, buttonsFn) {
 			let logoContainer = globalLogo.parentElement;
-			headerCol = logoContainer.parentElement;
+			if (logoContainer.classList.contains('mat-toolbar-row')) {
+				headerCol = logoContainer;
+				headerCol.parentElement.style.background = 'rgba(0,0,0,.87)';
+			} else {
+				headerCol = logoContainer.parentElement;
+			}
 			// add envName to document title before adding HTML
 			if (document.title.indexOf(envName) !== 0) {
 				document.title = envName + ' ' + document.title;
@@ -183,7 +188,8 @@
 			envName = dbName === '' ? envName : `${envName} [<span id="db-name">${dbName}</span>] `;
 			let span = document.createElement('span');
 				span.innerHTML = envName;
-				span.style.fontSize = '2em';
+				span.style.fontSize = '24px';
+				span.style.textTransform = 'initial';
 			logoContainer.appendChild(span);
 
 			// prep closing x
@@ -193,7 +199,7 @@
 				a.style.position = 'absolute';
 				a.style.right = '20px';
 				a.style.color = '#fff';
-				a.style.fontSize = '2em';
+				a.style.fontSize = '24px';
 				a.style.textDecoration = 'none';
 
 			if (!loginScreen) {
@@ -201,7 +207,7 @@
 				if (!exm93) {
 					globalLogo.style.marginTop = '8.5px';
 				}
-				span.style.paddingLeft = '1em';
+				span.style.paddingLeft = '1rem';
 				headerCol.style.maxHeight = '50px';
 
 				let button0, button1, button2;
@@ -364,7 +370,7 @@
 				dbSwitch1.innerHTML = `${switchTo1}`;
 				dbSwitch1.style.color = '#fff';
 				dbSwitch1.style.fontStyle = 'italic';
-				dbSwitch1.style.fontSize = '1.5em';
+				dbSwitch1.style.fontSize = '18px';
 				dbSwitch1.style.marginRight = '.5em';
 			let switchTo2 = dbName === 'web' ? 'core' : 'web';
 			let dbSwitch2 = document.createElement('a');
@@ -372,7 +378,7 @@
 				dbSwitch2.innerHTML = `${switchTo2} &rarr;`;
 				dbSwitch2.style.color = '#fff';
 				dbSwitch2.style.fontStyle = 'italic';
-				dbSwitch2.style.fontSize = '1.5em';
+				dbSwitch2.style.fontSize = '18px';
 			if (contentEditor) {
 				dbSwitch0.onmouseover = dbSwitch0.onfocus = function() { setLinkHref(this, false); }
 				dbSwitch1.onmouseover = dbSwitch1.onfocus = function() { setLinkHref(this, [switchTo1, dbName].indexOf('core') !== -1); }
