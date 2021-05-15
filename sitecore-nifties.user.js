@@ -174,11 +174,6 @@
 			if (document.title.indexOf(envName) !== 0) {
 				document.title = envName + ' ' + document.title;
 			}
-			// add html with img of forms-icon that exists since Sitecore 9
-			envName = (isPage('/Account/Login')
-					? '9 '
-					: `<img src="/-/temp/iconcache/apps/48x48/forms.png?uniq=${Date.now()}" style="display: none" onerror="this.outerHTML=8" onload="this.outerHTML=9"> `)
-				+ envName;
 			// add language
 			if (contentEditor || formsEditor || exm) {
 				envName = `${envName} (<span id="showLang"><i>loading...</i></span>)`;
