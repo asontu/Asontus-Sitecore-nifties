@@ -10,6 +10,7 @@ A Userscript for Tampermonkey (etc.) that adds some nifty functionality to the S
   - [Open item from content-tree search directly](#open-item-from-content-tree-search-directly)
   - [Stay at the bottom when opening items](#stay-at-the-bottom-when-opening-items)
   - [Quickly scroll to the opened item](#quickly-scroll-to-the-opened-item)
+  - [Open current item in the DB Browser](#open-current-item-in-the-db-browser)
   - [Open form in content editor](#open-form-in-content-editor)
   - [Export and import My Toolbar customization](#export-and-import-my-toolbar-customization)
 - [Installation](#installation)
@@ -19,7 +20,7 @@ Features:
 
 ### See information directly in the header
 
-Quickly see which Sitecore version, which database and which language you're working in. Customize per domain to quickly see which environment you're looking at:
+Quickly see which database and language you're working in. Customize per domain to quickly see which environment you're looking at:
 
 ![Customize header info per domain](./assets/register-domain.gif)
 
@@ -56,6 +57,10 @@ When you're scrolled to the very bottom of the content-tree and you open an item
 When you've opened an item in a different way than via the content-tree but you wanna see where in the tree it is, quickly go there with this button.
 
 ![Scroll to active item](./assets/scroll-to-selected.gif)
+
+### Open current item in the DB Browser
+
+A link is added after the item name to open the item in the DB Browser, respecting the current database and language.
 
 ### Open form in content editor
 

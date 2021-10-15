@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Asontu's Sitecore nifties
 // @namespace    https://asontu.github.io/
-// @version      6.5b
+// @version      6.5
 // @description  Add environment info to Sitecore header, extend functionality
 // @author       Herman Scheele
 // @grant        GM_setValue
@@ -660,6 +660,7 @@
 				}
 			}
 			searchObserver.observe(document.querySelector('#SearchResultHolder'), {attributes: true, childList: false, subtree: false});
+			quickInfoObserver.observe(document.querySelector('#EditorFrames'), {attributes: false, childList: true, subtree: false});
 		}
 		let maxScroll;
 		let scrollObserver = new MutationObserver(function(mutationList) {
@@ -701,6 +702,21 @@
 				document.querySelector('#ContentTreeInnerPanel').scrollTop = Math.max(0, activeNode.offsetTop - document.querySelector('#ContentTreeInnerPanel').offsetHeight/2);
 			}
 		}
+		let quickInfoObserver = new MutationObserver(function(mutationList) {
+			let nameCell = document.querySelector('.scEditorHeaderTitlePanel');
+			let curItem = document.querySelector('.scEditorHeaderQuickInfoInput').value;
+			let curLang = document.querySelector('#scLanguage').value;
+			let dbBrowserLink = document.createElement('a');
+				dbBrowserLink.setAttribute('href', `/sitecore/admin/dbbrowser.aspx?db=${findDb()}&lang=${curLang}&id=${curItem}`);
+				dbBrowserLink.innerHTML = '(Open in DB Browser &UpperRightArrow;)';
+				dbBrowserLink.style.fontStyle = 'italic';
+			let helpTitle = document.querySelector('.scEditorHeaderTitleHelp');
+			if (helpTitle) {
+				nameCell.insertBefore(dbBrowserLink, helpTitle);
+			} else {
+				nameCell.appendChild(dbBrowserLink);
+			}
+		});
 	})();
 
 	var formsContentEditorLinks = new (function() {
