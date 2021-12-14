@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Asontu's Sitecore nifties
 // @namespace    https://asontu.github.io/
-// @version      6.5
+// @version      6.6
 // @description  Add environment info to Sitecore header, extend functionality
 // @author       Herman Scheele
 // @grant        GM_setValue
@@ -607,6 +607,7 @@
 				item.parentNode.style.position = 'relative';
 				let chck = document.createElement('input');
 					chck.setAttribute('type', 'checkbox');
+					chck.setAttribute('title', 'Add this button to Quick Access in header');
 					chck.checked = qaItems.findIndex(qi => qi.href === item.getAttribute('href')) !== -1;
 					chck.style.position = 'absolute';
 					chck.style.top = '12px';
@@ -704,7 +705,7 @@
 		}
 		let quickInfoObserver = new MutationObserver(function(mutationList) {
 			let nameCell = document.querySelector('.scEditorHeaderTitlePanel');
-			let curItem = document.querySelector('.scEditorHeaderQuickInfoInput').value;
+			let curItem = encodeURIComponent(document.querySelector('.scEditorHeaderQuickInfoInput').value);
 			let curLang = document.querySelector('#scLanguage').value;
 			let dbBrowserLink = document.createElement('a');
 				dbBrowserLink.setAttribute('href', `/sitecore/admin/dbbrowser.aspx?db=${findDb()}&lang=${curLang}&id=${curItem}`);
@@ -715,6 +716,19 @@
 				nameCell.insertBefore(dbBrowserLink, helpTitle);
 			} else {
 				nameCell.appendChild(dbBrowserLink);
+			}
+			let templateId = document.querySelector('.scEditorHeaderQuickInfoInputID').value;
+			if (templateId === '{6ABEE1F2-4AB4-47F0-AD8B-BDB36F37F64C}') { // Form
+				let formsLink = document.createElement('a');
+					formsLink.setAttribute('href', `/sitecore/client/Applications/FormsBuilder/Pages/FormDesigner?sc_formmode=edit&formId=${curItem}&lang=${curLang}`);
+					formsLink.innerHTML = '(Edit in Sitecore Forms &UpperRightArrow;)';
+					formsLink.style.fontStyle = 'italic';
+					formsLink.style.marginLeft = '15px';
+				if (helpTitle) {
+					nameCell.insertBefore(formsLink, helpTitle);
+				} else {
+					nameCell.appendChild(formsLink);
+				}
 			}
 		});
 	})();
