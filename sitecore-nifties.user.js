@@ -662,6 +662,7 @@
 			}
 			searchObserver.observe(document.querySelector('#SearchResultHolder'), {attributes: true, childList: false, subtree: false});
 			quickInfoObserver.observe(document.querySelector('#EditorFrames'), {attributes: false, childList: true, subtree: false});
+			addDeepLinks([]);
 		}
 		let maxScroll;
 		let scrollObserver = new MutationObserver(function(mutationList) {
@@ -703,7 +704,8 @@
 				document.querySelector('#ContentTreeInnerPanel').scrollTop = Math.max(0, activeNode.offsetTop - document.querySelector('#ContentTreeInnerPanel').offsetHeight/2);
 			}
 		}
-		let quickInfoObserver = new MutationObserver(function(mutationList) {
+		let quickInfoObserver = new MutationObserver(addDeepLinks);
+		function addDeepLinks(mutationList) {
 			let nameCell = document.querySelector('.scEditorHeaderTitlePanel');
 			let curItem = encodeURIComponent(document.querySelector('.scEditorHeaderQuickInfoInput').value);
 			let curLang = document.querySelector('#scLanguage').value;
@@ -730,7 +732,7 @@
 					nameCell.appendChild(formsLink);
 				}
 			}
-		});
+		}
 	})();
 
 	var formsContentEditorLinks = new (function() {
