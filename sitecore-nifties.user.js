@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Asontu's Sitecore nifties
 // @namespace    https://asontu.github.io/
-// @version      6.6
+// @version      6.7
 // @description  Add environment info to Sitecore header, extend functionality
 // @author       Herman Scheele
 // @grant        GM_setValue
@@ -24,6 +24,7 @@
 	const designingForm = isPage('/sitecore/client/Applications/FormsBuilder/Pages/FormDesigner');
 	const loginScreen = isPage('/sitecore/login') || isPage('/Account/Login');
 	const contentEditor = isPage('/sitecore/shell/Applications/Content%20Editor.aspx');
+	const marketingAutomation = isPage('/sitecore/shell/client/Applications/MarketingAutomation');
 	var search = getSearch();
 	var globalLogo;
 
@@ -51,9 +52,9 @@
 		if (launchPad) {
 			quickAccess.initCheckboxes();
 		}
-		if (exm93) {
-			var exmObserver = new MutationObserver(function() {
-				exmObserver.disconnect();
+		if (exm93 || marketingAutomation) {
+			var headerObserver = new MutationObserver(function() {
+				headerObserver.disconnect();
 
 				globalLogo = headerInfo.detectGlobalLogo();
 				if (globalLogo) {
@@ -61,13 +62,16 @@
                     languageInfo.init();
 				}
 
-				exmObserver.observe(exmPanel, {attributes:false, childList: true, subtree: true});
+				headerObserver.observe(exmPanel, {attributes:false, childList: true, subtree: true});
 			});
 
 			var exmPanel = document.querySelector('div.progress-indicator-panel');
+			var maPanel = document.querySelector('ma-campaign-task-page');
 
 			if (exmPanel) {
-				exmObserver.observe(exmPanel, {attributes:false, childList: true, subtree: true});
+				headerObserver.observe(exmPanel, {attributes:false, childList: true, subtree: true});
+			} else if (maPanel) {
+				headerObserver.observe(maPanel, {attributes:false, childList: true, subtree: false});
 			}
 		}
 		if (formsEditor) {
