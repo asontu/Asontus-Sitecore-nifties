@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Asontu's Sitecore nifties
 // @namespace    https://asontu.github.io/
-// @version      7.1
+// @version      7.2
 // @description  Add environment info to Sitecore header, extend functionality
 // @author       Herman Scheele
 // @grant        GM_setValue
@@ -621,6 +621,8 @@
 				qaBar.appendChild(qaItem);
 			}
 		}
+		let checkboxes = [];
+		let repositionTimeout;
 		this.initCheckboxes = function() {
 			let items = q('.sc-launchpad-item');
 			let qaItems = GM_getJson('QuickAccessItems');
@@ -638,20 +640,28 @@
 					chck.checked = qaItems.findIndex(qi => qi.href === item.getAttribute('href')) !== -1;
 					chck.style.position = 'absolute';
 					chck.style.zIndex = '1';
-				if (sc10) {
-					chck.style.top = (item.getClientRects()[0].y + window.scrollY - 3) + 'px';
-					chck.style.left = (item.getClientRects()[0].x + window.scrollX + 1) + 'px';
-				} else {
 					chck.style.top = '12px';
-				}
 					chck.onclick = setItemAsQuickAccess;
 				item.parentNode.insertBefore(chck, item);
+				checkboxes.push(chck);
 			}
 
 			if (sc10) {
+				repositionCheckboxes();
+				window.addEventListener('resize', function() {
+					clearTimeout(repositionTimeout);
+					repositionTimeout = setTimeout(repositionCheckboxes, 500);
+				});
 				copyMissingSrc(qaItems, 'imgsrc', 'sc10imgsrc');
 			} else {
 				copyMissingSrc(qaItems, 'sc10imgsrc', 'imgsrc');
+			}
+		}
+		function repositionCheckboxes() {
+			for (let i = 0; i < checkboxes.length; i++) {
+				let rects = checkboxes[i].nextElementSibling.getClientRects()[0];
+				checkboxes[i].style.top = (rects.y + window.scrollY - 3) + 'px';
+				checkboxes[i].style.left = (rects.x + window.scrollX + 1) + 'px';
 			}
 		}
 		function copyMissingSrc(qaItems, from, to) {
