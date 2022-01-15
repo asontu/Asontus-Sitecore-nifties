@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Asontu's Sitecore nifties
 // @namespace    https://asontu.github.io/
-// @version      7.0
+// @version      7.1
 // @description  Add environment info to Sitecore header, extend functionality
 // @author       Herman Scheele
 // @grant        GM_setValue
@@ -938,14 +938,18 @@
 				this.select();
 			}
 			applyButton.onclick = function() {
+				let expandPromises = q('#TreeList_all > div > div > img[src*=treemenu_collapsed], #TreeList_all > div > div > img[src*=spinner]')
+					.map(img => () => expandItem(img));
+				let addPromises = ribbonInput.value
+						.split('|')
+						.filter(guid => guid !== customizeGuid)
+						.map(guid => () => addItem(guid));
+
 				getCurrentRibbon()
 					.filter(guid => guid !== customizeGuid)
 					.map(guid => () => removeItem(guid))
-					.concat([() => expandAll()])
-					.concat(ribbonInput.value
-						.split('|')
-						.filter(guid => guid !== customizeGuid)
-						.map(guid => () => addItem(guid)))
+					.concat(expandPromises)
+					.concat(addPromises)
 					.reduce((prom, fn) => prom.then(fn), Promise.resolve());
 			}
 		}
@@ -954,22 +958,19 @@
 			return q('#TreeList_selected option').map(o => o.value.substring(o.value.indexOf('|')+1));
 		}
 
-		function expandAll() {
+		function expandItem(img) {
 			return new Promise((resolve, reject) => {
-                let imgSelector = '#TreeList_all > div > div > img[src*=treemenu_collapsed], #TreeList_all > div > div > img[src*=spinner]';
-				let imgs = q(imgSelector);
-				if (!imgs.length) {
-					resolve();
-					return;
-				}
 				new MutationObserver((mutationList, observer) => {
-					if (document.querySelector('#TreeList_all').querySelector(imgSelector)) {
+					if (!mutationList.filter(ml => ml.attributeName === 'src').length) {
 						return;
 					}
+					if (!mutationList.pop().target.src.match(/treemenu_expanded\.png/)) {
+						return;
+					}
+					setTimeout(resolve, 10);
 					observer.disconnect();
-					resolve();
-				}).observe(document.querySelector('#TreeList_all'), {attributes:true, childList: true, subtree: true});
-				imgs.forEach(img => img.click());
+				}).observe(img, { attributes: true });
+				img.click();
 			});
 		}
 
