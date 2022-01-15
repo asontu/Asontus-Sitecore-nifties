@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Asontu's Sitecore nifties
 // @namespace    https://asontu.github.io/
-// @version      6.7
+// @version      7.0
 // @description  Add environment info to Sitecore header, extend functionality
 // @author       Herman Scheele
 // @grant        GM_setValue
@@ -14,6 +14,7 @@
 (function() {
 	'use strict';
 	// Constants and globals
+	var sc10 = false;
 	const exm91 = isPage('/sitecore/client/Applications/ECM/Pages');
 	const exm93 = !exm91 && isPage('/sitecore/shell/client/Applications/ECM');
 	const exm = exm91 || exm93;
@@ -37,20 +38,31 @@
 			// we're inside some non-Ribbon iframe we don't care about, exit
 			return;
 		}
+
+		sc10 = !!getComputedStyle(globalLogo).getPropertyValue('background-image').match(/logo\.svg"\)$/);
+		let sc10domains = GM_getJson('sc10domains');
+		if (sc10 && sc10domains.indexOf(location.host) === -1) {
+			sc10domains.push(location.host);
+			GM_setJson('sc10domains', sc10domains);
+		}
+		if (!sc10 && sc10domains.indexOf(location.host) !== -1) {
+			sc10 = true;
+		}
+
 		if (contentEditor) {
 			contentTreeTweaks.init();
 		}
 		if (!continueFeature.init()) {
 			return;
 		}
+		if (launchPad) {
+			quickAccess.initCheckboxes();
+		}
 		let envName, envColor, envAlpha;
 		[envName, envColor, envAlpha] = recognizedDomain.init(headerInfo.setHeaderColor);
 		headerInfo.repaint(globalLogo, envName, envColor, envAlpha, continueFeature.getButtons);
 		if (contentEditor || formsEditor || exm) {
 			languageInfo.init();
-		}
-		if (launchPad) {
-			quickAccess.initCheckboxes();
 		}
 		if (exm93 || marketingAutomation) {
 			var headerObserver = new MutationObserver(function() {
@@ -173,6 +185,9 @@
 		this.detectGlobalLogo = () => document.querySelector('#globalLogo, .sc-global-logo, .global-logo:not([style]), .logo-wrap img');
 		this.repaint = function(globalLogo, envName, envColor, envAlpha, buttonsFn) {
 			let logoContainer = globalLogo.parentElement;
+			if (sc10 && launchPad) {
+				document.querySelector('.sc-applicationHeader-title').style.display = 'none';
+			}
 			if (logoContainer.classList.contains('mat-toolbar-row')) {
 				headerCol = logoContainer;
 				headerCol.parentElement.style.background = 'rgba(0,0,0,.87)';
@@ -208,11 +223,11 @@
 
 			if (!loginScreen) {
 				globalLogo.style.float = 'left';
-				if (!exm93) {
+				if (!exm93 && !(sc10 && launchPad)) {
 					globalLogo.style.marginTop = '8.5px';
 				}
 				span.style.paddingLeft = '1rem';
-				headerCol.style.maxHeight = '50px';
+				headerCol.style.maxHeight = sc10 && launchPad ? '40px' : '50px';
 
 				let button0, button1, button2;
 				[button0, button1, button2] = buttonsFn(dbName);
@@ -590,7 +605,7 @@
 			}
 			qaBar.innerHTML = '';
 			for (let i = 0; i < qaItems.length; i++) {
-				let imgSrc = qaItems[i].imgsrc;
+				let imgSrc = sc10 ? qaItems[i].sc10imgsrc : qaItems[i].imgsrc;
 				let onErrorSrc = imgSrc.indexOf('/-/') === 0
 					? imgSrc.substring(2)
 					: `/-${imgSrc}`;
@@ -600,32 +615,63 @@
 					qaItem.innerHTML = `<img src="${imgSrc}" onerror="this.src='${onErrorSrc}';this.onerror=null;" height="32" style="vertical-align:middle">`;
 					qaItem.style.float = 'right';
 					qaItem.style.marginLeft = '10px';
+				if (sc10) {
+					qaItem.style.filter = 'invert(1) saturate(30) grayscale(1)';
+				}
 				qaBar.appendChild(qaItem);
 			}
 		}
 		this.initCheckboxes = function() {
 			let items = q('.sc-launchpad-item');
 			let qaItems = GM_getJson('QuickAccessItems');
+			if (sc10) {
+				document.querySelector('div[data-sc-id="ColumnPanel1"]').style.position = 'initial';
+			}
 			for (let i = 0; i < items.length; i++) {
 				let item = items[i];
-				item.parentNode.style.position = 'relative';
+				if (!sc10) {
+					item.parentNode.style.position = 'relative';
+				}
 				let chck = document.createElement('input');
 					chck.setAttribute('type', 'checkbox');
-					chck.setAttribute('title', 'Add this button to Quick Access in header');
+					chck.setAttribute('title', `Add ${item.getAttribute('title')} button to Quick Access in header`);
 					chck.checked = qaItems.findIndex(qi => qi.href === item.getAttribute('href')) !== -1;
 					chck.style.position = 'absolute';
-					chck.style.top = '12px';
 					chck.style.zIndex = '1';
+				if (sc10) {
+					chck.style.top = (item.getClientRects()[0].y + window.scrollY - 3) + 'px';
+					chck.style.left = (item.getClientRects()[0].x + window.scrollX + 1) + 'px';
+				} else {
+					chck.style.top = '12px';
+				}
 					chck.onclick = setItemAsQuickAccess;
 				item.parentNode.insertBefore(chck, item);
 			}
+
+			if (sc10) {
+				copyMissingSrc(qaItems, 'imgsrc', 'sc10imgsrc');
+			} else {
+				copyMissingSrc(qaItems, 'sc10imgsrc', 'imgsrc');
+			}
+		}
+		function copyMissingSrc(qaItems, from, to) {
+			let missingSrc = qaItems.filter(it => it[to] === undefined);
+			for (let i = 0; i < missingSrc.length; i++) {
+				let tile = document.querySelector(`a[href="${missingSrc[i]['href']}"]`);
+				missingSrc[i][to] = tile.querySelector('img').getAttribute('src');
+			}
+			GM_setJson('QuickAccessItems', qaItems);
 		}
 		function setItemAsQuickAccess() {
 			let item = {
 				'href' : this.nextElementSibling.getAttribute('href'),
-				'imgsrc' : this.nextElementSibling.querySelector('img').getAttribute('src'),
 				'title' : this.nextElementSibling.getAttribute('title')
 			};
+			if (sc10) {
+				item['sc10imgsrc'] = this.nextElementSibling.querySelector('img').getAttribute('src');
+			} else {
+				item['imgsrc'] = this.nextElementSibling.querySelector('img').getAttribute('src');
+			}
 			let qaItems = GM_getJson('QuickAccessItems');
 			let qaIndex = qaItems.findIndex(qi => qi.href === item.href);
 			if (this.checked && qaIndex === -1) {
