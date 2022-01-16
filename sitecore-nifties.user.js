@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Asontu's Sitecore nifties
 // @namespace    https://asontu.github.io/
-// @version      7.2
+// @version      7.3
 // @description  Add environment info to Sitecore header, extend functionality
 // @author       Herman Scheele
 // @grant        GM_setValue
@@ -109,6 +109,7 @@
 				return ['', '', ''];
 			} else {
 				menuCommand = GM_registerMenuCommand("Forget this domain", forgetDomain, "f");
+				GM_registerMenuCommand("Adjust settings for this domain", showRegForm, "a");
 				return [domainSettings.friendly, domainSettings.color, domainSettings.alpha || '.5'];
 			}
 		}
@@ -116,20 +117,27 @@
 			let ul = document.querySelector('ul.sc-accountInformation');
 			if (!ul) { return; }
 			let li = ul.querySelector('li');
+			
+			let prefilled = domainSettings || {
+				regex : `^${regEsc(location.host)}$`,
+				friendly : '',
+				color : '#2b2b2b',
+				alpha : '.5'
+			};
 
 			addRegFormElement(ul, li,
-				`<input type="text" id="domainRegex" placeholder="Domain regex" value="^${regEsc(location.host)}$"
+				`<input type="text" id="domainRegex" placeholder="Domain regex" value="${prefilled.regex}"
 						title="The regex to recognize this domain/environment"
 						style="display: inline-block;max-width: 80%; line-height: initial; color: #000;">`);
 			addRegFormElement(ul, li,
-				`<input type="text" id="domainTitle" placeholder="Friendly name"
+				`<input type="text" id="domainTitle" placeholder="Friendly name" value="${prefilled.friendly}"
 						title="Friendly name for this domain, will be placed in header and title"
 						style="display: inline-block;width: 80%; line-height: initial; color: #000;">`);
 			addRegFormElement(ul, li,
 				`<input type="color" id="domainColor"
-						title="Color to give the header on this domain" value="#2b2b2b">`);
+						title="Color to give the header on this domain" value="${prefilled.color}">`);
 			addRegFormElement(ul, li,
-				`<input type="range" id="domainAlpha" min="0" max="1" step=".1" value=".5"
+				`<input type="range" id="domainAlpha" min="0" max="1" step=".1" value="${prefilled.alpha}"
 						title="Transparency for the header color"
 						style="width: 100px;transform: rotate(-90deg) translate(-40px);display: inline-block;margin: 0 -45px;">`);
 			addRegFormElement(ul, li, `<button type="button" style="line-height: initial; color: #000;">Save</button>`);
@@ -143,22 +151,29 @@
 			}
 
 			ul.querySelector('button').onclick = function() {
-				domainSettings = {
-					regex : ul.querySelector('#domainRegex').value,
-					friendly : ul.querySelector('#domainTitle').value,
-					color : ul.querySelector('#domainColor').value,
-					alpha : ul.querySelector('#domainAlpha').value
-				};
+				if (domainSettings) {
+					domainSettings.regex = ul.querySelector('#domainRegex').value,
+					domainSettings.friendly = ul.querySelector('#domainTitle').value,
+					domainSettings.color = ul.querySelector('#domainColor').value,
+					domainSettings.alpha = ul.querySelector('#domainAlpha').value
+				} else {
+					domainSettings = {
+						regex : ul.querySelector('#domainRegex').value,
+						friendly : ul.querySelector('#domainTitle').value,
+						color : ul.querySelector('#domainColor').value,
+						alpha : ul.querySelector('#domainAlpha').value
+					};
 
-				registeredDomains.push(domainSettings);
+					registeredDomains.push(domainSettings);
+					GM_unregisterMenuCommand(menuCommand);
+				}
+				
 				GM_setJson('RegisteredDomains', registeredDomains);
 
 				let formElements = q('ul.sc-accountInformation li.form-element');
 				for (let i = 0; i < formElements.length; i++) {
 					ul.removeChild(formElements[i]);
 				}
-
-				GM_unregisterMenuCommand(menuCommand);
 			}
 		}
 		function addRegFormElement(ul, li, newHtml) {
