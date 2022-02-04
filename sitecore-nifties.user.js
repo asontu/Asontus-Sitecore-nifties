@@ -630,7 +630,7 @@
 					qaItem.innerHTML = `<img src="${imgSrc}" onerror="this.src='${onErrorSrc}';this.onerror=null;" height="32" style="vertical-align:middle">`;
 					qaItem.style.float = 'right';
 					qaItem.style.marginLeft = '10px';
-				if (sc10) {
+				if (sc10 && imgSrc.indexOf('launchpadicons') > -1) {
 					qaItem.style.filter = 'invert(1) saturate(30) grayscale(1)';
 				}
 				qaBar.appendChild(qaItem);

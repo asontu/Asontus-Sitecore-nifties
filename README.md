@@ -1,7 +1,7 @@
 Asontus-Sitecore-nifties
 ========================
 
-A Userscript for Tampermonkey (etc.) that adds some nifty functionality to the Sitecore client. Should work on Sitecore 8 and 9, best results are with Tampermonkey in Chrome but goal is to work with Greasemonkey and Firefox too.
+A Userscript for Tampermonkey (etc.) that adds some nifty functionality to the Sitecore client. Should work on Sitecore 8, 9 and 10, best results are with Tampermonkey in Chrome but goal is to work with Greasemonkey and Firefox too.
 
 - [Features](#features)
   - [See information directly in the header](#see-information-directly-in-the-header)
