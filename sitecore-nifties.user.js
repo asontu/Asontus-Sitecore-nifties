@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Asontu's Sitecore nifties
 // @namespace    https://asontu.github.io/
-// @version      7.3
+// @version      7.4
 // @description  Add environment info to Sitecore header, extend functionality
 // @author       Herman Scheele
 // @grant        GM_setValue
@@ -27,9 +27,12 @@
 	const contentEditor = isPage('/sitecore/shell/Applications/Content%20Editor.aspx');
 	const marketingAutomation = isPage('/sitecore/shell/client/Applications/MarketingAutomation');
 	var search = getSearch();
+	var globalSettings = {};
 	var globalLogo;
 
 	function init() {
+		niftySettings.init(globalSettings, headerInfo.repaint);
+		
 		if (isPage('/sitecore/shell/default.aspx') && location.search === '?xmlcontrol=CustomizeRibbon') {
 			customRibbonExchange.init();
 		}
@@ -60,11 +63,13 @@
 		}
 		let envName, envColor, envAlpha;
 		[envName, envColor, envAlpha] = recognizedDomain.init(headerInfo.setHeaderColor);
-		headerInfo.repaint(globalLogo, envName, envColor, envAlpha, continueFeature.getButtons);
-		if (contentEditor || formsEditor || exm) {
+		if (globalSettings['niftyHeader']) {
+			headerInfo.repaint(globalLogo, envName, envColor, envAlpha, continueFeature.getButtons);
+		}
+		if (globalSettings['niftyHeader'] && (contentEditor || formsEditor || exm)) {
 			languageInfo.init();
 		}
-		if (exm93 || marketingAutomation) {
+		if (globalSettings['niftyHeader'] && (exm93 || marketingAutomation)) {
 			var headerObserver = new MutationObserver(function() {
 				headerObserver.disconnect();
 
@@ -117,7 +122,7 @@
 			let ul = document.querySelector('ul.sc-accountInformation');
 			if (!ul) { return; }
 			let li = ul.querySelector('li');
-			
+
 			let prefilled = domainSettings || {
 				regex : `^${regEsc(location.host)}$`,
 				friendly : '',
@@ -167,7 +172,7 @@
 					registeredDomains.push(domainSettings);
 					GM_unregisterMenuCommand(menuCommand);
 				}
-				
+
 				GM_setJson('RegisteredDomains', registeredDomains);
 
 				let formElements = q('ul.sc-accountInformation li.form-element');
@@ -966,9 +971,9 @@
 				let expandPromises = q('#TreeList_all > div > div > img[src*=treemenu_collapsed], #TreeList_all > div > div > img[src*=spinner]')
 					.map(img => () => expandItem(img));
 				let addPromises = ribbonInput.value
-						.split('|')
-						.filter(guid => guid !== customizeGuid)
-						.map(guid => () => addItem(guid));
+					.split('|')
+					.filter(guid => guid !== customizeGuid)
+					.map(guid => () => addItem(guid));
 
 				getCurrentRibbon()
 					.filter(guid => guid !== customizeGuid)
@@ -1017,6 +1022,48 @@
 				select.dispatchEvent(dblClickEvent);
 			},
 			document.querySelector(`#TreeList_selected`));
+		}
+	})();
+
+	var niftySettings = new (function() {
+		var redrawFunc;
+		var settingsObj;
+		this.init = function(settings, redraw) {
+			settingsObj = settings;
+			redrawFunc = redraw;
+			
+			getSettings(settingsObj);
+			
+			GM_registerMenuCommand("Show/hide Sitecore header info", toggleStealth, "s");
+		}
+
+		function toggleStealth() {
+			setSetting('niftyHeader', !settingsObj['niftyHeader']);
+			//redrawFunc();
+		}
+
+		function setSetting(key, value) {
+			let settings = GM_getJson('NiftySettings');
+			let i = settings.findIndex(s => s.key === key);
+			if (i < 0) {
+				settings.push({ 'key': key, 'value': value });
+			} else {
+				settings[i].value = value;
+			}
+			GM_setJson('NiftySettings', settings);
+			settingsObj[key] = value;
+		}
+
+		function getSettings(obj) {
+			GM_getJson('NiftySettings').reduce((obj, setting) => obj[setting.key] = setting.value, obj);
+			
+			setDefault(obj, 'niftyHeader', true);
+		}
+		
+		function setDefault(obj, key, def) {
+			if (!obj.hasOwnProperty(key)) {
+				obj[key] = def;
+			}
 		}
 	})();
 
