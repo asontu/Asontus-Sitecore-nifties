@@ -695,8 +695,10 @@
 		function copyMissingSrc(qaItems, from, to) {
 			let missingSrc = qaItems.filter(it => it[to] === undefined);
 			for (let i = 0; i < missingSrc.length; i++) {
-				let tile = document.querySelector(`a[href="${missingSrc[i]['href']}"]`);
-				missingSrc[i][to] = tile.querySelector('img').getAttribute('src');
+				let otherSrc = nullConditional(document,
+					d => d.querySelector(`a[href="${missingSrc[i]['href']}"] img`),
+					i => i.getAttribute('src'),
+					s => missingSrc[i][to] = s);
 			}
 			GM_setJson('QuickAccessItems', qaItems);
 		}
@@ -1131,6 +1133,9 @@
 			return false;
 		}
 		return foundNodes;
+	}
+	function nullConditional(start, ...fns) {
+		return fns.reduce((p, fn) => p === null ? null : fn(p), start);
 	}
 	function hasJsonStructure(str) {
 		if (typeof str !== 'string') return false;
