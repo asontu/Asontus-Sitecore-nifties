@@ -145,7 +145,8 @@
 				`<input type="range" id="domainAlpha" min="0" max="1" step=".1" value="${prefilled.alpha}"
 						title="Transparency for the header color"
 						style="width: 100px;transform: rotate(-90deg) translate(-40px);display: inline-block;margin: 0 -45px;">`);
-			addRegFormElement(ul, li, `<button type="button" style="line-height: initial; color: #000;">Save</button>`);
+			addRegFormElement(ul, li, `<button type="button" style="line-height: initial; color: #000;" value="save">Save</button>`);
+			addRegFormElement(ul, li, `<button type="button" style="line-height: initial; color: #000;" value="cancel">Cancel</button>`);
 
 			ul.querySelector('#domainColor').oninput = function() {
 				colorsFn(this.value, ul.querySelector('#domainAlpha').value);
@@ -155,7 +156,7 @@
 				colorsFn(ul.querySelector('#domainColor').value, this.value);
 			}
 
-			ul.querySelector('button').onclick = function() {
+			ul.querySelector('button[value="save"]').onclick = function() {
 				if (domainSettings) {
 					domainSettings.regex = ul.querySelector('#domainRegex').value,
 					domainSettings.friendly = ul.querySelector('#domainTitle').value,
@@ -175,10 +176,17 @@
 
 				GM_setJson('RegisteredDomains', registeredDomains);
 
-				let formElements = q('ul.sc-accountInformation li.form-element');
-				for (let i = 0; i < formElements.length; i++) {
-					ul.removeChild(formElements[i]);
-				}
+				delRegForm(ul);
+			}
+			
+			ul.querySelector('button[value="cancel"]').onclick = function() {
+				delRegForm(ul);
+			}
+		}
+		function delRegForm(ul) {
+			let formElements = q('ul.sc-accountInformation li.form-element');
+			for (let i = 0; i < formElements.length; i++) {
+				ul.removeChild(formElements[i]);
 			}
 		}
 		function addRegFormElement(ul, li, newHtml) {
