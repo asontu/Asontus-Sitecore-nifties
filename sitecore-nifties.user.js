@@ -32,7 +32,7 @@
 
 	function init() {
 		niftySettings.init(globalSettings, headerInfo.repaint);
-		
+
 		if (isPage('/sitecore/shell/default.aspx') && location.search === '?xmlcontrol=CustomizeRibbon') {
 			customRibbonExchange.init();
 		}
@@ -178,7 +178,7 @@
 
 				delRegForm(ul);
 			}
-			
+
 			ul.querySelector('button[value="cancel"]').onclick = function() {
 				delRegForm(ul);
 			}
@@ -1041,9 +1041,9 @@
 		this.init = function(settings, redraw) {
 			settingsObj = settings;
 			redrawFunc = redraw;
-			
+
 			getSettings(settingsObj);
-			
+
 			GM_registerMenuCommand("Show/hide Sitecore header info", toggleStealth, "s");
 		}
 
@@ -1066,10 +1066,10 @@
 
 		function getSettings(obj) {
 			GM_getJson('NiftySettings').reduce((obj, setting) => obj[setting.key] = setting.value, obj);
-			
+
 			setDefault(obj, 'niftyHeader', true);
 		}
-		
+
 		function setDefault(obj, key, def) {
 			if (!obj.hasOwnProperty(key)) {
 				obj[key] = def;
