@@ -33,6 +33,19 @@
 	function init() {
 		niftySettings.init(globalSettings, headerInfo.repaint);
 
+		let styleSheets = recognizedDomain.styleSheet;
+
+		var styleTag = document.createElement('style');
+
+		styleTag.type = 'text/css';
+		if (styleTag.styleSheet) {
+			styleTag.styleSheet.cssText = styleSheets;
+		} else {
+			styleTag.appendChild(document.createTextNode(styleSheets));
+		}
+
+		(document.head || document.getElementsByTagName('head')[0]).appendChild(styleTag);
+
 		if (isPage('/sitecore/shell/default.aspx') && location.search === '?xmlcontrol=CustomizeRibbon') {
 			customRibbonExchange.init();
 		}
@@ -118,6 +131,26 @@
 				return [domainSettings.friendly, domainSettings.color, domainSettings.alpha || '.5'];
 			}
 		}
+		this.styleSheet = `
+		#domainRegex {
+			display: inline-block;
+			max-width: 80%;
+			line-height: initial;
+			color: #000;
+		}
+		#domainTitle {
+			display: inline-block;
+			width: 80%;
+			line-height: initial;
+			color: #000;
+		}
+		#domainAlpha {
+			width: 100px;
+			transform: rotate(-90deg) translate(-40px);
+			display: inline-block;
+			margin: 0 -45px;
+		}
+		`;
 		function showRegForm() {
 			let ul = document.querySelector('ul.sc-accountInformation');
 			if (!ul) { return; }
@@ -132,19 +165,16 @@
 
 			addRegFormElement(ul, li,
 				`<input type="text" id="domainRegex" placeholder="Domain regex" value="${prefilled.regex}"
-						title="The regex to recognize this domain/environment"
-						style="display: inline-block;max-width: 80%; line-height: initial; color: #000;">`);
+						title="The regex to recognize this domain/environment">`);
 			addRegFormElement(ul, li,
 				`<input type="text" id="domainTitle" placeholder="Friendly name" value="${prefilled.friendly}"
-						title="Friendly name for this domain, will be placed in header and title"
-						style="display: inline-block;width: 80%; line-height: initial; color: #000;">`);
+						title="Friendly name for this domain, will be placed in header and title">`);
 			addRegFormElement(ul, li,
 				`<input type="color" id="domainColor"
 						title="Color to give the header on this domain" value="${prefilled.color}">`);
 			addRegFormElement(ul, li,
 				`<input type="range" id="domainAlpha" min="0" max="1" step=".1" value="${prefilled.alpha}"
-						title="Transparency for the header color"
-						style="width: 100px;transform: rotate(-90deg) translate(-40px);display: inline-block;margin: 0 -45px;">`);
+						title="Transparency for the header color">`);
 			addRegFormElement(ul, li, `<button type="button" style="line-height: initial; color: #000;" value="save">Save</button>`);
 			addRegFormElement(ul, li, `<button type="button" style="line-height: initial; color: #000;" value="cancel">Cancel</button>`);
 
