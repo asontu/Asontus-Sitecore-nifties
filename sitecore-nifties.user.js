@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Asontu's Sitecore nifties
 // @namespace    https://asontu.github.io/
-// @version      7.4
+// @version      7.5
 // @description  Add environment info to Sitecore header, extend functionality
 // @author       Herman Scheele
 // @grant        GM_setValue
@@ -33,7 +33,7 @@
 	function init() {
 		niftySettings.init(globalSettings, headerInfo.repaint);
 
-		let styleSheets = recognizedDomain.styleSheet;
+		let styleSheets = recognizedDomain.styleSheet + niftySettings.styleSheet;
 
 		var styleTag = document.createElement('style');
 
@@ -127,7 +127,7 @@
 				return ['', '', ''];
 			} else {
 				menuCommand = GM_registerMenuCommand("Forget this domain", forgetDomain, "f");
-				GM_registerMenuCommand("Adjust settings for this domain", showRegForm, "a");
+				GM_registerMenuCommand("Adjust settings for this domain", showRegForm, "d");
 				return [domainSettings.friendly, domainSettings.color, domainSettings.alpha || '.5'];
 			}
 		}
@@ -1075,11 +1075,68 @@
 			getSettings(settingsObj);
 
 			GM_registerMenuCommand("Show/hide Sitecore header info", toggleStealth, "s");
+
+			GM_registerMenuCommand("Adjust nifty settings", showSettingsWindow, "a");
 		}
+		this.styleSheet = `
+		#niftySettingsWindow {
+			position: fixed;
+			inset: 0;
+			background: rgb(255 255 255 / .5);
+			z-index: 800;
+		}
+		#niftySettingsWindow label {
+			display: block;
+		}
+		#niftySettingsWindow button {
+			margin-top: 2rem;
+		}
+		#niftySettingsWindow div {
+			position: fixed;
+			z-index: 900;
+			inset: 30vh 30vw;
+			padding: 3rem;
+			background: #fff;
+			border: 2px solid rgb(0 0 0 / 15%);
+			box-shadow: 0px 3px 8px rgb(0 0 0 / 15%);
+			border-radius: 10px;
+		}
+		#closeNiftySettings {
+			cursor: pointer;
+			position: absolute;
+			top: 0px;
+			right: 15px;
+			font-weight: 900;
+			font-size: 3rem;
+		}
+		`
 
 		function toggleStealth() {
 			setSetting('niftyHeader', !settingsObj['niftyHeader']);
 			//redrawFunc();
+		}
+
+		function showSettingsWindow() {
+			let settingsWindow = document.createRange().createContextualFragment(`
+			<div id="niftySettingsWindow">
+				<div>
+					<span id="closeNiftySettings">&times;</span>
+					<label><input type="checkbox" id="niftyHeader" ${settingsObj['niftyHeader'] ? 'checked' : ''} /> Enable header color and info</label>
+					<button id="saveNiftySettings">Save</button>
+				</div>
+			</div>
+			`);
+
+			document.body.appendChild(settingsWindow);
+			document.querySelector('#closeNiftySettings').onclick = closeSettingsWindow;
+			document.querySelector('#saveNiftySettings').onclick = function() {
+				setSetting('niftyHeader', document.querySelector('#niftyHeader').checked);
+				closeSettingsWindow();
+			}
+		}
+		
+		function closeSettingsWindow() {
+			document.body.removeChild(document.querySelector('#niftySettingsWindow'));
 		}
 
 		function setSetting(key, value) {
