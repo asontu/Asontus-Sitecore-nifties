@@ -33,7 +33,9 @@
 	function init() {
 		niftySettings.init(globalSettings, headerInfo.repaint);
 
-		let styleSheets = recognizedDomain.styleSheet + niftySettings.styleSheet;
+		let styleSheets = recognizedDomain.styleSheet +
+			quickAccess.styleSheet +
+			niftySettings.styleSheet;
 
 		var styleTag = document.createElement('style');
 
@@ -681,9 +683,6 @@
 		this.getContainer = function() {
 			let qaContainer = document.createElement('div');
 				qaContainer.id = 'QuickAccess';
-				qaContainer.style.float = 'right';
-				qaContainer.style.imageRendering = 'auto'; // Gecko
-				qaContainer.style.imageRendering = '-webkit-optimize-contrast';   // WebKit/Chromium
 			return qaContainer;
 		}
 		this.render = function() {
@@ -708,14 +707,28 @@
 					qaItem.setAttribute('href', qaItems[i].href);
 					qaItem.setAttribute('title', qaItems[i].title);
 					qaItem.innerHTML = `<img src="${imgSrc}" ${onError} height="32" style="vertical-align:middle">`;
-					qaItem.style.float = 'right';
-					qaItem.style.marginLeft = '10px';
-				if (imgSrc.indexOf('launchpadicons') > -1) {
-					qaItem.style.filter = 'invert(1) saturate(30) grayscale(1)';
-				}
 				qaBar.appendChild(qaItem);
 			}
 		}
+		this.styleSheet = `
+		#QuickAccess {
+			float: right;
+			imageRendering: auto;
+			imageRendering: -webkit-optimize-contrast;
+		}
+		#QuickAccess a {
+			float: right;
+			margin-left: 10px;
+		}
+		#QuickAccess img[src*=launchpadicons] {
+			filter: invert(1) saturate(30) grayscale(1);
+		}
+		.sc-launchpad input[type=checkbox] {
+			position: absolute;
+			z-index: 1;
+			top: 12px;
+		}
+		`;
 		let checkboxes = [];
 		let repositionTimeout;
 		this.initCheckboxes = function() {
@@ -733,9 +746,6 @@
 					chck.setAttribute('type', 'checkbox');
 					chck.setAttribute('title', `Add ${item.getAttribute('title')} button to Quick Access in header`);
 					chck.checked = qaItems.findIndex(qi => qi.href === item.getAttribute('href')) !== -1;
-					chck.style.position = 'absolute';
-					chck.style.zIndex = '1';
-					chck.style.top = '12px';
 					chck.onclick = setItemAsQuickAccess;
 				item.parentNode.insertBefore(chck, item);
 				checkboxes.push(chck);
@@ -1153,7 +1163,7 @@
 			font-weight: 900;
 			font-size: 3rem;
 		}
-		`
+		`;
 
 		function toggleStealth() {
 			setSetting('niftyHeader', !settingsObj['niftyHeader']);
