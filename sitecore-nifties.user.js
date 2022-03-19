@@ -33,6 +33,16 @@
 	function init() {
 		niftySettings.init(globalSettings, headerInfo.repaint);
 
+		if (isPage('/sitecore/shell/default.aspx') && location.search === '?xmlcontrol=CustomizeRibbon') {
+			customRibbonExchange.init();
+		}
+
+		globalLogo = headerInfo.detectGlobalLogo();
+		if (!globalLogo) {
+			// we're inside some non-Ribbon iframe we don't care about, exit
+			return;
+		}
+
 		let styleSheets = recognizedDomain.styleSheet +
 			quickAccess.styleSheet +
 			niftySettings.styleSheet;
@@ -47,15 +57,6 @@
 		}
 
 		(document.head || document.getElementsByTagName('head')[0]).appendChild(styleTag);
-
-		if (isPage('/sitecore/shell/default.aspx') && location.search === '?xmlcontrol=CustomizeRibbon') {
-			customRibbonExchange.init();
-		}
-		globalLogo = headerInfo.detectGlobalLogo();
-		if (!globalLogo) {
-			// we're inside some non-Ribbon iframe we don't care about, exit
-			return;
-		}
 
 		sc10 = !!getComputedStyle(globalLogo).getPropertyValue('background-image').match(/logo\.svg"\)$/);
 		let sc10domains = GM_getJson('sc10domains');
