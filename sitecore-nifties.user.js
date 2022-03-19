@@ -582,33 +582,6 @@
 			{attributes:false, childList: true, subtree: true});
 		}
 
-		function openLangMenu(langTo, doAct) {
-			let langLink = document.querySelector('.scEditorHeaderVersionsLanguage');
-			return mop(function() {
-				if (!doAct || langTo === document.querySelector('#scLanguage').value) {
-					return true;
-				}
-				setTimeout(function() { langLink.click(); }, 500);
-			},
-			langLink,
-			'#Header_Language_Gallery',
-			{attributes:false, childList: true, subtree: true});
-		}
-
-		function clickLang(langTo, doAct) {
-			return mop(function() {
-				if (!doAct) {
-					return true;
-				}
-				document.querySelector('#Header_Language_Gallery').onload = function() {
-					this.contentWindow.document.querySelector(`div.scMenuPanelItem[onclick*="language=${langTo}"]`).click();
-				}
-			},
-			document.querySelector('#EditorFrames'),
-			'.scEditorPanel',
-			{attributes:false, childList: true, subtree: true});
-		}
-
 		function scrollTree(scrollTreeTo) {
 			if (scrollTreeTo > 0) {
 				document.querySelector('#ContentTreeInnerPanel').scrollTop = scrollTreeTo;
@@ -940,6 +913,11 @@
 				} else {
 					nameCell.appendChild(formsLink);
 				}
+			} else if (globalSettings['autoLangSwitch'] && curLang !== 'en' && templateId === '{AB86861A-6030-46C5-B394-E8F99E8B87DB}') { // Template
+				showSpinner();
+				openLangMenu('en', true)
+					.then((nodes) => clickLang('en', !!nodes.length))
+					.then(() => hideSpinner());
 			}
 		}
 	})();
@@ -1213,6 +1191,7 @@
 					<label><input type="checkbox" id="niftyHeader" ${settingsObj['niftyHeader'] ? 'checked' : ''} /> Enable header color and info</label>
 					<label><input type="checkbox" id="colorizeLaunchPadIcons" ${settingsObj['colorizeLaunchPadIcons'] ? 'checked' : ''} /> Use old (colorized) launchpad icons in Sitecore 10.1+</label>
 					<label><input type="checkbox" id="addAdminTile" ${settingsObj['addAdminTile'] ? 'checked' : ''} /> Add launchpad tile to Admin Tools</label>
+					<label><input type="checkbox" id="autoLangSwitch" ${settingsObj['autoLangSwitch'] ? 'checked' : ''} /> Automatically switch to language <strong>en</strong> when opening a template</label>
 					<button id="saveNiftySettings">Save</button>
 				</div>
 			</div>
@@ -1224,6 +1203,7 @@
 				setSetting('niftyHeader', document.querySelector('#niftyHeader').checked);
 				setSetting('colorizeLaunchPadIcons', document.querySelector('#colorizeLaunchPadIcons').checked);
 				setSetting('addAdminTile', document.querySelector('#addAdminTile').checked);
+				setSetting('autoLangSwitch', document.querySelector('#autoLangSwitch').checked);
 				closeSettingsWindow();
 			}
 		}
@@ -1250,6 +1230,7 @@
 			setDefault(obj, 'niftyHeader', true);
 			setDefault(obj, 'colorizeLaunchPadIcons', false);
 			setDefault(obj, 'addAdminTile', false);
+			setDefault(obj, 'autoLangSwitch', true);
 		}
 
 		function setDefault(obj, key, def) {
@@ -1262,6 +1243,31 @@
 	init();
 
 	// Helper functions
+	function openLangMenu(langTo, doAct) {
+		let langLink = document.querySelector('.scEditorHeaderVersionsLanguage');
+		return mop(function() {
+			if (!doAct || langTo === document.querySelector('#scLanguage').value) {
+				return true;
+			}
+			setTimeout(function() { langLink.click() }, 200);
+		},
+		langLink,
+		'#Header_Language_Gallery',
+		{attributes:false, childList: true, subtree: true});
+	}
+	function clickLang(langTo, doAct) {
+		return mop(function() {
+			if (!doAct) {
+				return true;
+			}
+			document.querySelector('#Header_Language_Gallery').onload = function() {
+				this.contentWindow.document.querySelector(`div.scMenuPanelItem[onclick*="language=${langTo}"]`).click();
+			}
+		},
+		document.querySelector('#EditorFrames'),
+		'.scEditorPanel',
+		{attributes:false, childList: true, subtree: true});
+	}
 	function GM_getJson(key) {
 		return JSON.parse(GM_getValue(key, '[]'));
 	}
