@@ -1,24 +1,26 @@
 // ==UserScript==
 // @name         Asontu's Sitecore nifties
 // @namespace    https://asontu.github.io/
-// @version      7.5
+// @version      8.0
 // @description  Add environment info to Sitecore header, extend functionality
 // @author       Herman Scheele
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_registerMenuCommand
 // @grant        GM_unregisterMenuCommand
+// @grant        GM_xmlhttpRequest
 // @updateURL    https://github.com/asontu/Asontus-Sitecore-nifties/raw/master/sitecore-nifties.user.js
 // @downloadURL  https://github.com/asontu/Asontus-Sitecore-nifties/raw/master/sitecore-nifties.user.js
 // ==/UserScript==
 (function() {
 	'use strict';
 	// Constants and globals
-	var sc10 = false;
+	var scVersion = 0.0;
 	const exm91 = isPage('/sitecore/client/Applications/ECM/Pages');
 	const exm93 = !exm91 && isPage('/sitecore/shell/client/Applications/ECM');
 	const exm = exm91 || exm93;
 	const ribbon = isPage('ribbon.aspx');
+	const adminDash = isPage('/sitecore/admin');
 	const desktop = isPage('/sitecore/shell/default.aspx');
 	const launchPad = isPage('/sitecore/client/applications/launchpad');
 	const formsEditor = isPage('/sitecore/client/Applications/FormsBuilder/');
@@ -31,6 +33,40 @@
 	var globalLogo;
 
 	function init() {
+		if (loginScreen || adminDash) {
+			initFeatures();
+			return;
+		}
+
+		let storedVersion = parseFloat(sessionStorage.getItem('__niftyScVersion') || '0.0');
+
+		if (storedVersion > 0.0) {
+			scVersion = storedVersion;
+			initFeatures();
+			initVersionSpecifics();
+			return;
+		}
+
+		GM_getDocument('/sitecore/shell/applications/about')
+			.then((doc) => getSitecoreVersion(doc))
+			.then(() => initVersionSpecifics())
+			.catch((err) => console.error(err));
+
+		initFeatures();
+	}
+
+	function getSitecoreVersion(doc) {
+		scVersion = nullConditional(doc,
+			d => d.querySelector('#VersionInfo .sc_about_font'),
+			q => q.firstChild,
+			f => f.textContent,
+			t => t.match(/Sitecore(?:\.NET)?\s+(\d+\.\d+)/),
+			m => m[1],
+			g => parseFloat(g)) || scVersion;
+		sessionStorage.setItem('__niftyScVersion', scVersion);
+	}
+
+	function initFeatures() {
 		niftySettings.init(globalSettings, headerInfo.repaint);
 
 		if (isPage('/sitecore/shell/default.aspx') && location.search === '?xmlcontrol=CustomizeRibbon') {
@@ -58,16 +94,6 @@
 
 		(document.head || document.getElementsByTagName('head')[0]).appendChild(styleTag);
 
-		sc10 = !!getComputedStyle(globalLogo).getPropertyValue('background-image').match(/logo\.svg"\)$/);
-		let sc10domains = GM_getJson('sc10domains');
-		if (sc10 && sc10domains.indexOf(location.host) === -1) {
-			sc10domains.push(location.host);
-			GM_setJson('sc10domains', sc10domains);
-		}
-		if (!sc10 && sc10domains.indexOf(location.host) !== -1) {
-			sc10 = true;
-		}
-
 		if (contentEditor) {
 			contentTreeTweaks.init();
 		}
@@ -78,7 +104,6 @@
 			if (globalSettings['addAdminTile']) {
 				quickAccess.initExtraTiles();
 			}
-			quickAccess.initCheckboxes();
 		}
 		let envName, envColor, envAlpha;
 		[envName, envColor, envAlpha] = recognizedDomain.init(headerInfo.setHeaderColor);
@@ -113,6 +138,19 @@
 		if (formsEditor) {
 			formsContentEditorLinks.init();
 		}
+	}
+
+	function initVersionSpecifics() {
+		globalLogo = headerInfo.detectGlobalLogo();
+		if (!globalLogo) {
+			// we're inside some non-Ribbon iframe we don't care about, exit
+			return;
+		}
+		headerInfo.versionSpecifics(globalLogo);
+		if (launchPad) {
+			quickAccess.initCheckboxes(scVersion >= 10.1);
+		}
+		quickAccess.render(scVersion >= 10.1);
 	}
 
 	var recognizedDomain = new (function() {
@@ -249,9 +287,6 @@
 		this.detectGlobalLogo = () => document.querySelector('#globalLogo, .sc-global-logo, .global-logo:not([style]), .logo-wrap img');
 		this.repaint = function(globalLogo, envName, envColor, envAlpha, buttonsFn) {
 			let logoContainer = globalLogo.parentElement;
-			if (sc10 && launchPad) {
-				document.querySelector('.sc-applicationHeader-title').style.display = 'none';
-			}
 			if (logoContainer.classList.contains('mat-toolbar-row')) {
 				headerCol = logoContainer;
 				headerCol.parentElement.style.background = 'rgba(0,0,0,.87)';
@@ -287,11 +322,7 @@
 
 			if (!loginScreen) {
 				globalLogo.style.float = 'left';
-				if (!exm93 && !(sc10 && launchPad)) {
-					globalLogo.style.marginTop = '8.5px';
-				}
 				span.style.paddingLeft = '1rem';
-				headerCol.style.maxHeight = sc10 && launchPad ? '40px' : '50px';
 
 				let button0, button1, button2;
 				[button0, button1, button2] = buttonsFn(dbName);
@@ -309,7 +340,6 @@
 				} else {
 					logoContainer.style.float = 'none';
 					logoContainer.appendChild(quickAccess.getContainer());
-					quickAccess.render();
 				}
 			} else {
 				// different logic for the log-in screen
@@ -328,6 +358,16 @@
 			if (headerCol.className === 'col-md-6') {
 				headerCol.className = 'col-xs-6';
 				headerCol.nextElementSibling.className = 'col-xs-6';
+			}
+		}
+		this.versionSpecifics = function(globalLogo) {
+			let sc10Launchpad = scVersion >= 10.1 && launchPad
+			if (sc10Launchpad) {
+				document.querySelector('.sc-applicationHeader-title').style.display = 'none';
+			}
+			headerCol.style.maxHeight = sc10Launchpad ? '40px' : '50px';
+			if (!exm93 && !sc10Launchpad) {
+				globalLogo.style.marginTop = '8.5px';
 			}
 		}
 		this.setHeaderColor = function(hex, alpha) {
@@ -663,7 +703,7 @@
 				qaContainer.id = 'QuickAccess';
 			return qaContainer;
 		}
-		this.render = function() {
+		this.render = function(sc10) {
 			let qaBar = document.querySelector('#QuickAccess');
 			let qaItems = GM_getJson('QuickAccessItems');
 			if (!qaBar || !qaItems) {
@@ -740,7 +780,7 @@
 
 			newTileParent.appendChild(adminTile);
 		}
-		this.initCheckboxes = function() {
+		this.initCheckboxes = function(sc10) {
 			let items = q('a.sc-launchpad-item');
 			let qaItems = GM_getJson('QuickAccessItems');
 			if (sc10) {
@@ -800,7 +840,7 @@
 				'href' : this.nextElementSibling.getAttribute('href'),
 				'title' : this.nextElementSibling.getAttribute('title')
 			};
-			if (sc10) {
+			if (scVersion >= 10.1) {
 				item['sc10imgsrc'] = this.nextElementSibling.querySelector('img').getAttribute('data-nifty-src');
 			} else {
 				item['imgsrc'] = this.nextElementSibling.querySelector('img').getAttribute('src');
@@ -1274,6 +1314,27 @@
 	}
 	function GM_setJson(key, value) {
 		GM_setValue(key, JSON.stringify(value));
+	}
+	function GM_getDocument(url) {
+		return new Promise((resolve, reject) => {
+            GM_xmlhttpRequest({
+                method: "GET",
+                url: url,
+                onload: function(response)
+                {
+                    if (response.readyState !== 4) {
+						return;
+					}
+
+					if (response.status === 200 || response.status === 304) {
+						let doc = (new DOMParser()).parseFromString(response.responseText, 'text/html');
+						resolve(doc);
+					} else {
+						reject(new Error(`${response.status} ${response.statusText}`));
+					}
+                }
+            });
+		});
 	}
 	function mop(trigger, watch, query, options, timeout) {
 		return new Promise((resolve, reject) => {
