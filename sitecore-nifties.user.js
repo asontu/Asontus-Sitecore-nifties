@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Asontu's Sitecore nifties
 // @namespace    https://asontu.github.io/
-// @version      8.0
+// @version      8.1
 // @description  Add environment info to Sitecore header, extend functionality
 // @author       Herman Scheele
 // @grant        GM_setValue
@@ -854,7 +854,7 @@
 				qaItems.splice(qaIndex, 1);
 			}
 			GM_setJson('QuickAccessItems', qaItems);
-			_this.render();
+			_this.render(scVersion >= 10.1);
 		}
 	})();
 
