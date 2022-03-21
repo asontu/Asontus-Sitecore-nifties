@@ -1284,13 +1284,14 @@
 	init();
 
 	// Helper functions
+    var langInterval;
 	function openLangMenu(langTo, doAct) {
 		let langLink = document.querySelector('.scEditorHeaderVersionsLanguage');
 		return mop(function() {
 			if (!doAct || langTo === document.querySelector('#scLanguage').value) {
 				return true;
 			}
-			setTimeout(function() { langLink.click() }, 200);
+			langInterval = setInterval(function() { langLink.click() }, 100);
 		},
 		langLink,
 		'#Header_Language_Gallery',
@@ -1301,6 +1302,7 @@
 			if (!doAct) {
 				return true;
 			}
+			clearInterval(langInterval);
 			document.querySelector('#Header_Language_Gallery').onload = function() {
 				this.contentWindow.document.querySelector(`div.scMenuPanelItem[onclick*="language=${langTo}"]`).click();
 			}
