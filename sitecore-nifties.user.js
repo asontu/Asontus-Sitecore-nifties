@@ -33,17 +33,22 @@
 	var globalLogo;
 
 	function init() {
-		if (loginScreen || adminDash) {
+		if (loginScreen) {
 			initFeatures();
 			return;
 		}
-
+		
 		let storedVersion = parseFloat(sessionStorage.getItem('__niftyScVersion') || '0.0');
 
 		if (storedVersion > 0.0) {
 			scVersion = storedVersion;
 			initFeatures();
 			initVersionSpecifics();
+			return;
+		}
+		
+		if (adminDash) {
+			initFeatures();
 			return;
 		}
 
