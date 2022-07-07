@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Asontu's Sitecore nifties
 // @namespace    https://asontu.github.io/
-// @version      8.1
+// @version      8.2
 // @description  Add environment info to Sitecore header, extend functionality
 // @author       Herman Scheele
 // @grant        GM_setValue
@@ -109,6 +109,9 @@
 			if (globalSettings['addAdminTile']) {
 				quickAccess.initExtraTiles();
 			}
+		}
+		if (adminDash) {
+			adminEnrichment.init();
 		}
 		let envName, envColor, envAlpha;
 		[envName, envColor, envAlpha] = recognizedDomain.init(headerInfo.setHeaderColor);
@@ -860,6 +863,18 @@
 			}
 			GM_setJson('QuickAccessItems', qaItems);
 			_this.render(scVersion >= 10.1);
+		}
+	})();
+
+	var adminEnrichment = new (function() {
+		this.init = function() {
+			let buttonToClone = document.querySelector('.mat-card div:last-of-type');
+			let kickUserButton = buttonToClone.cloneNode(true);
+				kickUserButton.querySelector('a').href = '/sitecore/client/Applications/LicenseOptions/KickUser.aspx';
+				kickUserButton.querySelector('a span').innerText = 'Kick User';
+				kickUserButton.querySelector('p').innerText = 'View logged in users and kick them out';
+			
+			buttonToClone.parentElement.appendChild(kickUserButton);
 		}
 	})();
 
