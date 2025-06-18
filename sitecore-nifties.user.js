@@ -31,6 +31,8 @@
 	var search = getSearch();
 	var globalSettings = {};
 	var globalLogo;
+	var envColor;
+	var envAlpha;
 
 	function init() {
 		if (loginScreen) {
@@ -85,6 +87,7 @@
 		}
 
 		let styleSheets = recognizedDomain.styleSheet +
+			headerInfo.styleSheet +
 			quickAccess.styleSheet +
 			niftySettings.styleSheet;
 
@@ -113,7 +116,7 @@
 		if (adminDash) {
 			adminEnrichment.init();
 		}
-		let envName, envColor, envAlpha;
+		let envName;
 		[envName, envColor, envAlpha] = recognizedDomain.init(headerInfo.setHeaderColor);
 		if (globalSettings['niftyHeader']) {
 			headerInfo.repaint(globalLogo, envName, envColor, envAlpha, continueFeature.getButtons);
@@ -128,6 +131,7 @@
 				globalLogo = headerInfo.detectGlobalLogo();
 				if (globalLogo) {
 					headerInfo.repaint(globalLogo, envName, envColor, envAlpha, continueFeature.getButtons);
+					quickAccess.render(scVersion >= 10.1);
                     languageInfo.init();
 				}
 
@@ -154,7 +158,7 @@
 			// we're inside some non-Ribbon iframe we don't care about, exit
 			return;
 		}
-		headerInfo.versionSpecifics(globalLogo);
+		headerInfo.versionSpecifics(globalLogo, envColor, envAlpha);
 		if (launchPad) {
 			quickAccess.initCheckboxes(scVersion >= 10.1);
 		}
@@ -304,14 +308,24 @@
 	var headerInfo = new (function() {
 		var _this = this;
 		var headerCol;
-		this.detectGlobalLogo = () => document.querySelector('#globalLogo, .sc-global-logo, .global-logo:not([style]), .logo-wrap img');
+		this.detectGlobalLogo = () => document.querySelector('#globalLogo, .sc-global-logo, [scgloballogo], .global-logo:not([style]), .logo-wrap img');
 		this.repaint = function(globalLogo, envName, envColor, envAlpha, buttonsFn) {
+			if (document.querySelector('#NiftyHeaderInfo') !== null) {
+				return;
+			}
 			let logoContainer = globalLogo.parentElement;
 			if (logoContainer.classList.contains('mat-toolbar-row')) {
 				headerCol = logoContainer;
 				headerCol.parentElement.style.background = 'rgba(0,0,0,.87)';
 			} else {
 				headerCol = logoContainer.parentElement;
+			}
+			headerCol.classList.add('niftyHeaderInfo');
+			if (window.getComputedStyle(logoContainer).getPropertyValue('width') === '32px') {
+				logoContainer = logoContainer.parentElement;
+				logoContainer.style.lineHeight = '40px';
+			} else if (!ribbon) {
+				logoContainer.style.float = 'none';
 			}
 			// add envName to document title before adding HTML
 			if (document.title.indexOf(envName) !== 0) {
@@ -325,6 +339,7 @@
 			let dbName = findDb();
 			envName = dbName === '' ? envName : `${envName} [<span id="db-name">${dbName}</span>] `;
 			let span = document.createElement('span');
+				span.id = 'NiftyHeaderInfo';
 				span.innerHTML = envName;
 				span.style.fontSize = '24px';
 				span.style.textTransform = 'initial';
@@ -358,7 +373,6 @@
 					a.setAttribute('target', '_top');
 					logoContainer.appendChild(a);
 				} else {
-					logoContainer.style.float = 'none';
 					logoContainer.appendChild(quickAccess.getContainer());
 				}
 			} else {
@@ -370,33 +384,70 @@
 				a.style.top = '10px';
 				logoContainer.appendChild(a);
 			}
-			if (envColor) {
-				_this.setHeaderColor(envColor, envAlpha);
-			}
-			headerCol.style.overflow = 'hidden';
-			headerCol.style.whiteSpace = 'nowrap';
-			if (headerCol.className === 'col-md-6') {
-				headerCol.className = 'col-xs-6';
-				headerCol.nextElementSibling.className = 'col-xs-6';
+			if (headerCol.classList.contains('col-md-6')) {
+				headerCol.classList.replace('col-md-6', 'col-xs-6');
+				headerCol.nextElementSibling.classList.replace('col-md-6', 'col-xs-6');
 			}
 		}
-		this.versionSpecifics = function(globalLogo) {
-			let sc10Launchpad = scVersion >= 10.1 && launchPad
+		this.versionSpecifics = function(globalLogo, envColor, envAlpha) {
+			const sc10Launchpad = scVersion >= 10.1 && launchPad;
+			headerCol.style.maxHeight = sc10Launchpad && scVersion < 10.4 ? '40px' : '50px';
 			if (sc10Launchpad) {
 				document.querySelector('.sc-applicationHeader-title').style.display = 'none';
-				document.querySelector('.sc-applicationContent-main').style.minHeight = 'calc(100vh - 40px)';
+				document.querySelector('.sc-applicationContent-main').style.minHeight = `calc(100vh - ${headerCol.style.maxHeight})`;
 			}
-			headerCol.style.maxHeight = sc10Launchpad ? '40px' : '50px';
-			if (!exm93 && !sc10Launchpad) {
+			if (!exm93 && !sc10Launchpad && !marketingAutomation) {
 				globalLogo.style.marginTop = '8.5px';
+			}
+			if (envColor) {
+				_this.setHeaderColor(envColor, envAlpha);
+			} else if (scVersion >= 10.4) {
+				headerCol.style.color = '#000';
+				headerCol.querySelectorAll('a').forEach(a => a.style.color = '#000');
 			}
 		}
 		this.setHeaderColor = function(hex, alpha) {
 			if (!headerCol) {
 				_this.detectGlobalLogo();
 			}
-			headerCol.style.background = `rgba(${hex2rgb(hex).join(',')}, ${alpha})`;
+			
+			const backgroundChannels = hex2rgb(hex);
+			const contrastingColor = getContrastingColor(backgroundChannels, alpha);
+			if (scVersion >= 10.4 && launchPad) {
+				headerCol.style.background = `linear-gradient(#2b2b2b, #2b2b2b), rgba(${backgroundChannels.join(',')}, ${alpha})`;
+				headerCol.style.backgroundBlendMode = 'overlay';
+			} else {
+				headerCol.style.background = `rgba(${backgroundChannels.join(',')}, ${alpha})`;
+			}
+			headerCol.style.color = contrastingColor;
+			headerCol.querySelectorAll('a').forEach(a => a.style.color = contrastingColor);
+			setTimeout(() => headerCol.style.transition = 'background 0.5s, color 0.5s', 0);
 		}
+		function getContrastingColor(colorChannels, alphaChannel) {
+			const blended = colorChannels.map(colorChannel => Math.round(alphaChannel * colorChannel + (1 - alphaChannel) * 43));
+			const [r, g, b] = blended.map((colorChannel) => {
+				const normalized = colorChannel / 255;
+				return normalized <= 0.03928
+					? normalized / 12.92
+					: Math.pow((normalized + 0.055) / 1.055, 2.4);
+			});
+			return 0.2126 * r + 0.7152 * g + 0.0722 * b > .5 ? '#000' : '#fff';
+		}
+		this.styleSheet = `
+			.niftyHeaderInfo {
+				overflow: hidden;
+				whiteSpace: nowrap;
+			}
+			.niftyHeaderInfo * {
+				transition: color 0.5s;
+			}
+			.sc-globalHeader-startButton:not(:has(#NiftyHeaderInfo)) {
+				background-color: rgba(255, 255, 255, .9);
+			}
+			.sc-globalHeader-startButton:not(:has(#NiftyHeaderInfo)):hover {
+				background-color: rgba(255, 255, 255, .8);
+			}
+		`;
 	})();
 
 	var languageInfo = new (function() {
