@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Asontu's Sitecore nifties
 // @namespace    https://asontu.github.io/
-// @version      8.2
+// @version      8.2.1
 // @description  Add environment info to Sitecore header, extend functionality
 // @author       Herman Scheele
 // @grant        GM_setValue
@@ -372,6 +372,7 @@
 			let sc10Launchpad = scVersion >= 10.1 && launchPad
 			if (sc10Launchpad) {
 				document.querySelector('.sc-applicationHeader-title').style.display = 'none';
+				document.querySelector('.sc-applicationContent-main').style.minHeight = 'calc(100vh - 40px)';
 			}
 			headerCol.style.maxHeight = sc10Launchpad ? '40px' : '50px';
 			if (!exm93 && !sc10Launchpad) {
