@@ -37,7 +37,7 @@
 			initFeatures();
 			return;
 		}
-		
+
 		let storedVersion = parseFloat(sessionStorage.getItem('__niftyScVersion') || '0.0');
 
 		if (storedVersion > 0.0) {
@@ -46,7 +46,7 @@
 			initVersionSpecifics();
 			return;
 		}
-		
+
 		if (adminDash) {
 			initFeatures();
 			return;
@@ -240,10 +240,10 @@
 
 			ul.querySelector('button[value="save"]').onclick = function() {
 				if (domainSettings) {
-					domainSettings.regex = ul.querySelector('#domainRegex').value,
-					domainSettings.friendly = ul.querySelector('#domainTitle').value,
-					domainSettings.color = ul.querySelector('#domainColor').value,
-					domainSettings.alpha = ul.querySelector('#domainAlpha').value
+					domainSettings.regex = ul.querySelector('#domainRegex').value;
+					domainSettings.friendly = ul.querySelector('#domainTitle').value;
+					domainSettings.color = ul.querySelector('#domainColor').value;
+					domainSettings.alpha = ul.querySelector('#domainAlpha').value;
 				} else {
 					domainSettings = {
 						regex : ul.querySelector('#domainRegex').value,
@@ -874,7 +874,7 @@
 				kickUserButton.querySelector('a').href = '/sitecore/client/Applications/LicenseOptions/KickUser.aspx';
 				kickUserButton.querySelector('a span').innerText = 'Kick User';
 				kickUserButton.querySelector('p').innerText = 'View logged in users and kick them out';
-			
+
 			buttonToClone.parentElement.appendChild(kickUserButton);
 		}
 	})();
