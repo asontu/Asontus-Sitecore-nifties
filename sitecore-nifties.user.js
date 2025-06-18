@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Asontu's Sitecore nifties
 // @namespace    https://asontu.github.io/
-// @version      8.2.1
+// @version      8.3
 // @description  Add environment info to Sitecore header, extend functionality
 // @author       Herman Scheele
 // @grant        GM_setValue
@@ -164,7 +164,9 @@
 	var recognizedDomain = new (function() {
 		let registeredDomains = GM_getJson('RegisteredDomains');
 		let domainSettings = false;
-		let menuCommand = null;
+		let menuCommandRegister = null;
+		let menuCommandAdjust = null;
+		let menuCommandForget = null;
 		let colorsFn = null;
 		this.init = function(headerColorsFn) {
 			colorsFn = headerColorsFn;
@@ -174,12 +176,11 @@
 			}
 			if (!domainSettings) {
 				if (!loginScreen) {
-					menuCommand = GM_registerMenuCommand("Register domain with user-script", showRegForm, "r");
+					registerMenuCommands(false);
 				}
 				return ['', '', ''];
 			} else {
-				menuCommand = GM_registerMenuCommand("Forget this domain", forgetDomain, "f");
-				GM_registerMenuCommand("Adjust settings for this domain", showRegForm, "d");
+				registerMenuCommands(true);
 				return [domainSettings.friendly, domainSettings.color, domainSettings.alpha || '.5'];
 			}
 		}
@@ -253,7 +254,7 @@
 					};
 
 					registeredDomains.push(domainSettings);
-					GM_unregisterMenuCommand(menuCommand);
+					registerMenuCommands(true);
 				}
 
 				GM_setJson('RegisteredDomains', registeredDomains);
@@ -283,8 +284,19 @@
 			if (i > -1 && confirm(`Are you sure you want forget this ${registeredDomains[i].friendly} domain?\n\n(matched: ${registeredDomains[i].regex})`)) {
 				registeredDomains.splice(i, 1);
 				GM_setJson('RegisteredDomains', registeredDomains);
-				GM_unregisterMenuCommand(menuCommand);
 				domainSettings = false;
+				registerMenuCommands(false);
+			}
+		}
+		function registerMenuCommands(currentlyRegistered) {
+			if (currentlyRegistered) {
+				nullConditional(menuCommandRegister, GM_unregisterMenuCommand);
+				menuCommandForget = GM_registerMenuCommand("Forget this domain", forgetDomain, "f");
+				menuCommandAdjust = GM_registerMenuCommand("Adjust settings for this domain", showRegForm, "d");
+			} else {
+				nullConditional(menuCommandForget, GM_unregisterMenuCommand);
+				nullConditional(menuCommandAdjust, GM_unregisterMenuCommand);
+				menuCommandRegister = GM_registerMenuCommand("Register domain with user-script", showRegForm, "r");
 			}
 		}
 	})();
