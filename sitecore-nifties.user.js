@@ -1494,7 +1494,7 @@
 		return str.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
 	}
 	function isPage(url) {
-		return location.pathname.match(new RegExp(regEsc(url), 'i'));
+		return !!location.pathname.match(new RegExp(regEsc(url), 'i'));
 	}
 	function q(query) {
 		return Array.from(document.querySelectorAll(query));
