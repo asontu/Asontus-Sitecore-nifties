@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Asontu's Sitecore nifties
 // @namespace    https://asontu.github.io/
-// @version      8.3
+// @version      8.4
 // @description  Add environment info to Sitecore header, extend functionality
 // @author       Herman Scheele
 // @grant        GM_setValue
@@ -410,7 +410,7 @@
 			if (!headerCol) {
 				_this.detectGlobalLogo();
 			}
-			
+
 			const backgroundChannels = hex2rgb(hex);
 			const contrastingColor = getContrastingColor(backgroundChannels, alpha);
 			if (scVersion >= 10.4 && launchPad) {
