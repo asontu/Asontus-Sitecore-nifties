@@ -949,6 +949,15 @@
 	var adminEnrichment = new (function() {
 		this.init = function() {
 			let buttonToClone = document.querySelector('.mat-card div:last-of-type');
+			if (buttonToClone === null) {
+				mop(() => false, document.querySelector('div.app'), '.mat-card:first-of-type div:last-of-type', {attributes:false, childList: true, subtree: true}, 5000)
+					.then(buttons => cloneToKickUserButton(buttons[0]))
+					.catch((err) => console.error(err));
+			} else {
+				cloneToKickUserButton(buttonToClone);
+			}
+		}
+		function cloneToKickUserButton(buttonToClone) {
 			let kickUserButton = buttonToClone.cloneNode(true);
 				kickUserButton.querySelector('a').href = '/sitecore/client/Applications/LicenseOptions/KickUser.aspx';
 				kickUserButton.querySelector('a span').innerText = 'Kick User';
