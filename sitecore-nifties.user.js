@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Asontu's Sitecore nifties
 // @namespace    https://asontu.github.io/
-// @version      8.4
+// @version      8.4.1
 // @description  Add environment info to Sitecore header, extend functionality
 // @author       Herman Scheele
 // @grant        GM_setValue
@@ -648,8 +648,7 @@
 						.map(itemSelector => () => expandTreeNode(itemSelector))
 						.reduce((prom, fn) => prom.then(fn), Promise.resolve())
 						.then(() => clickTreeNode(search.clickTo))
-						.then((nodes) => openLangMenu(search.langTo, !!nodes.length))
-						.then((nodes) => clickLang(search.langTo, !!nodes.length))
+						.then((nodes) => switchLanguage(search.langTo, !!nodes.length))
 						.then(() => scrollTree(search.scrollTreeTo))
 						.then(() => scrollPanel(search.scrollPanelTo))
 						.then(() => clickRibbon(search.ribbonTo))
@@ -660,8 +659,7 @@
 				if (search.guidTo) {
 					showSpinner();
 					openGuid(search.guidTo)
-						.then(() => openLangMenu(search.langTo, !!search.langTo))
-						.then((nodes) => clickLang(search.langTo, !!nodes.length))
+						.then(() => switchLanguage(search.langTo, !!search.langTo))
 						.then(() => hideSpinner());
 				}
 			}
@@ -1065,8 +1063,7 @@
 				}
 			} else if (globalSettings['autoLangSwitch'] && curLang !== 'en' && templateId === '{AB86861A-6030-46C5-B394-E8F99E8B87DB}') { // Template
 				showSpinner();
-				openLangMenu('en', true)
-					.then((nodes) => clickLang('en', !!nodes.length))
+				switchLanguage('en', true)
 					.then(() => hideSpinner());
 			}
 		}
@@ -1393,33 +1390,51 @@
 	init();
 
 	// Helper functions
-    var langInterval;
-	function openLangMenu(langTo, doAct) {
-		let langLink = document.querySelector('.scEditorHeaderVersionsLanguage');
-		return mop(function() {
-			if (!doAct || langTo === document.querySelector('#scLanguage').value) {
-				return true;
+	function switchLanguage(langTo, doAct) {
+		if (!doAct || langTo.toLowerCase() === document.querySelector('#scLanguage').value.toLowerCase()) {
+			return Promise.resolve();
+		}
+		return new Promise((resolve, reject) => {
+			var observer, subObserver, langInterval, langIframeWatcher;
+			observer = new MutationObserver((mutationList) => {
+				let any = searchMutationListFor(mutationList, '#Header_Language_Gallery');
+				if (!any) {
+					return;
+				}
+				clearInterval(langInterval);
+				observer.disconnect();
+				langIframeWatcher = setTimeout(function() {
+					if (document.querySelector('#Header_Language_Gallery') === null) {
+						subObserver.disconnect();
+						attemptOpenLangMenu();
+					}
+				}, 2000);
+				attemptClickLang(resolve);
+			});
+			attemptOpenLangMenu();
+			function attemptOpenLangMenu() {
+				let langLink = document.querySelector('.scEditorHeaderVersionsLanguage');
+				observer.observe(langLink, {attributes:false, childList: true, subtree: true});
+				langInterval = setInterval(function() { langLink.click() }, 200);
 			}
-			langInterval = setInterval(function() { langLink.click() }, 100);
-		},
-		langLink,
-		'#Header_Language_Gallery',
-		{attributes:false, childList: true, subtree: true});
+			function attemptClickLang(resolve) {
+				subObserver = new MutationObserver((mutationList) => {
+					let any = searchMutationListFor(mutationList, '.scEditorPanel');
+					if (!any) {
+						return;
+					}
+					subObserver.disconnect();
+					resolve(any);
+				});
+				subObserver.observe(document.querySelector('#EditorFrames'), {attributes:false, childList: true, subtree: true});
+				document.querySelector('#Header_Language_Gallery').onload = function() {
+					clearTimeout(langIframeWatcher);
+					this.contentWindow.document.querySelector(`div.scMenuPanelItem[onclick*="language=${langTo}"]`).click();
+				}
+			}
+		});
 	}
-	function clickLang(langTo, doAct) {
-		return mop(function() {
-			if (!doAct) {
-				return true;
-			}
-			clearInterval(langInterval);
-			document.querySelector('#Header_Language_Gallery').onload = function() {
-				this.contentWindow.document.querySelector(`div.scMenuPanelItem[onclick*="language=${langTo}"]`).click();
-			}
-		},
-		document.querySelector('#EditorFrames'),
-		'.scEditorPanel',
-		{attributes:false, childList: true, subtree: true});
-	}
+
 	function GM_getJson(key) {
 		return JSON.parse(GM_getValue(key, '[]'));
 	}
