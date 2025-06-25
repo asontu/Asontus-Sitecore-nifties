@@ -87,7 +87,7 @@
 		}
 
 		let styleSheets = recognizedDomain.styleSheet +
-			headerInfo.styleSheet +
+			(globalSettings['niftyHeader'] ? headerInfo.styleSheet : '') +
 			quickAccess.styleSheet +
 			niftySettings.styleSheet;
 
@@ -158,11 +158,13 @@
 			// we're inside some non-Ribbon iframe we don't care about, exit
 			return;
 		}
-		headerInfo.versionSpecifics(globalLogo, envColor, envAlpha);
-		if (launchPad) {
-			quickAccess.initCheckboxes(scVersion >= 10.1);
+		if (globalSettings['niftyHeader']) {
+			headerInfo.versionSpecifics(globalLogo, envColor, envAlpha);
+			if (launchPad) {
+				quickAccess.initCheckboxes(scVersion >= 10.1);
+			}
+			quickAccess.render(scVersion >= 10.1);
 		}
-		quickAccess.render(scVersion >= 10.1);
 	}
 
 	var recognizedDomain = new (function() {
