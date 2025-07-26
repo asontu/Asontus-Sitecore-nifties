@@ -21,6 +21,7 @@
 	const exm = exm91 || exm93;
 	const ribbon = isPage('ribbon.aspx');
 	const adminDash = isPage('/sitecore/admin');
+	const dbBrowser = isPage('/sitecore/admin/dbbrowser.aspx');
 	const desktop = isPage('/sitecore/shell/default.aspx');
 	const launchPad = isPage('/sitecore/client/applications/launchpad');
 	const formsEditor = isPage('/sitecore/client/Applications/FormsBuilder/');
@@ -113,7 +114,7 @@
 				quickAccess.initExtraTiles();
 			}
 		}
-		if (adminDash) {
+		if (adminDash && !dbBrowser) {
 			adminEnrichment.init();
 		}
 		let envName;
@@ -121,7 +122,7 @@
 		if (globalSettings['niftyHeader']) {
 			headerInfo.repaint(globalLogo, envName, envColor, envAlpha, continueFeature.getButtons);
 		}
-		if (globalSettings['niftyHeader'] && (contentEditor || formsEditor || exm)) {
+		if (globalSettings['niftyHeader'] && (contentEditor || formsEditor || exm || dbBrowser)) {
 			languageInfo.init();
 		}
 		if (globalSettings['niftyHeader'] && (exm93 || marketingAutomation)) {
@@ -310,13 +311,13 @@
 	var headerInfo = new (function() {
 		var _this = this;
 		var headerCol;
-		this.detectGlobalLogo = () => document.querySelector('#globalLogo, .sc-global-logo, [scgloballogo], .global-logo:not([style]), .logo-wrap img');
+		this.detectGlobalLogo = () => document.querySelector('#globalLogo, .sc-global-logo, [scgloballogo], .global-logo:not([style]), .logo-wrap img, .header > .caption:not(.dataBases)');
 		this.repaint = function(globalLogo, envName, envColor, envAlpha, buttonsFn) {
 			if (document.querySelector('#NiftyHeaderInfo') !== null) {
 				return;
 			}
 			let logoContainer = globalLogo.parentElement;
-			if (logoContainer.classList.contains('mat-toolbar-row')) {
+			if (logoContainer.classList.contains('mat-toolbar-row') || dbBrowser) {
 				headerCol = logoContainer;
 				headerCol.parentElement.style.background = 'rgba(0,0,0,.87)';
 			} else {
@@ -334,7 +335,7 @@
 				document.title = envName + ' ' + document.title;
 			}
 			// add language
-			if (contentEditor || formsEditor || exm) {
+			if (contentEditor || formsEditor || exm || dbBrowser) {
 				envName = `${envName} (<span id="showLang"><i>loading...</i></span>)`;
 			}
 			// add currently active database and append next to logo
@@ -346,6 +347,12 @@
 				span.style.fontSize = '24px';
 				span.style.textTransform = 'initial';
 			logoContainer.appendChild(span);
+			if (dbBrowser) {
+				span.style.float = 'left';
+				globalLogo.style.float = 'left';
+				logoContainer.appendChild(quickAccess.getContainer());
+				return;
+			}
 
 			// prep closing x
 			var a = document.createElement('a');
@@ -363,8 +370,8 @@
 
 				let button0, button1, button2;
 				[button0, button1, button2] = buttonsFn(dbName);
-				if (button1) { logoContainer.appendChild(button1); }
-				if (button2) { logoContainer.appendChild(button2); }
+				if (button1) { span.appendChild(button1); }
+				if (button2) { span.appendChild(button2); }
 				if (button0) {
 					span.querySelector('#db-name').innerHTML = '';
 					span.querySelector('#db-name').appendChild(button0);
@@ -392,6 +399,15 @@
 			}
 		}
 		this.versionSpecifics = function(globalLogo, envColor, envAlpha) {
+			if (envColor) {
+				_this.setHeaderColor(envColor, envAlpha);
+			} else if (scVersion >= 10.4) {
+				headerCol.style.color = '#000';
+				headerCol.querySelectorAll('a').forEach(a => a.style.color = '#000');
+			}
+			if (dbBrowser) {
+				return;
+			}
 			const sc10Launchpad = scVersion >= 10.1 && launchPad;
 			headerCol.style.maxHeight = sc10Launchpad && scVersion < 10.4 ? '40px' : '50px';
 			if (sc10Launchpad) {
@@ -400,12 +416,6 @@
 			}
 			if (!exm93 && !sc10Launchpad && !marketingAutomation) {
 				globalLogo.style.marginTop = '8.5px';
-			}
-			if (envColor) {
-				_this.setHeaderColor(envColor, envAlpha);
-			} else if (scVersion >= 10.4) {
-				headerCol.style.color = '#000';
-				headerCol.querySelectorAll('a').forEach(a => a.style.color = '#000');
 			}
 		}
 		this.setHeaderColor = function(hex, alpha) {
@@ -419,11 +429,14 @@
 				headerCol.style.background = `linear-gradient(#2b2b2b, #2b2b2b), rgba(${backgroundChannels.join(',')}, ${alpha})`;
 				headerCol.style.backgroundBlendMode = 'overlay';
 			} else {
-				headerCol.style.background = `rgba(${backgroundChannels.join(',')}, ${alpha})`;
+				headerCol.style.backgroundColor = `rgba(${backgroundChannels.join(',')}, ${alpha})`;
 			}
 			headerCol.style.color = contrastingColor;
 			headerCol.querySelectorAll('a').forEach(a => a.style.color = contrastingColor);
-			setTimeout(() => headerCol.style.transition = 'background 0.5s, color 0.5s', 0);
+			setTimeout(() => {
+                headerCol.style.transition = 'background 0.5s, color 0.5s';
+                headerCol.querySelectorAll('a').forEach(a => a.style.transition = 'color 0.5s');
+            }, 0);
 		}
 		function getContrastingColor(colorChannels, alphaChannel) {
 			const blended = colorChannels.map(colorChannel => Math.round(alphaChannel * colorChannel + (1 - alphaChannel) * 43));
@@ -438,10 +451,7 @@
 		this.styleSheet = `
 			.niftyHeaderInfo {
 				overflow: hidden;
-				whiteSpace: nowrap;
-			}
-			.niftyHeaderInfo * {
-				transition: color 0.5s;
+				white-space: nowrap;
 			}
 			.sc-globalHeader-startButton:not(:has(#NiftyHeaderInfo)) {
 				background-color: rgba(255, 255, 255, .9);
@@ -477,7 +487,7 @@
 			'en'    : `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='15'%3E%3Cpath fill='%23FFF' d='M.03 14.98H26V.01H.03z'/%3E%3Cpath fill='%2300247D' d='M15.16 0v4.57L23.06 0zM2.92 15h7.9v-4.55zm12.24 0h7.9l-7.9-4.55zM2.92 0l7.9 4.57V0zm17.33 5H26V1.7zm.03 4.98l5.72 3.3v-3.3zM0 9.98v3.3l5.72-3.3zM0 5h5.72L0 1.7z'/%3E%3Cpath fill='%23CF142B' d='M11.71 0v6H.04V9h11.69V15h2.6V9.01H26V6H14.31V0z'/%3E%3Cpath fill='%23CF142B' d='M24.02 0l-8.63 5h1.97l8.61-5zM8.62 9.99L0 14.97h1.97l8.6-5zm8.73 0l8.65 5V13.9l-6.73-3.92zM0 0v1.09L6.73 5h1.92z'/%3E%3C/svg%3E")`,
 			'All'   : `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1000' height='600'%3E%3Cpath fill='%2300c' d='M1000 0H0v600h1000z'/%3E%3Cg transform='matrix(-.9174 .3977 .3977 .9174 663.16 -566.61)' fill='none' stroke='%23fff' stroke-width='20' stroke-linecap='round'%3E%3Cpath d='M494.44 920.22V540.39M684.44 730.3a190 109.7 0 01-95 95 190 109.7 0 01-190 0 190 109.7 0 01-95-95'/%3E%3Cpath d='M-793.35-575.2a109.67 189.95 0 01109.67 189.96A109.67 189.95 0 01-793.35-195.3' transform='rotate(-150)'/%3E%3Cpath d='M399.46 565.8a189.95 109.67 60 01189.95 109.67 189.95 109.67 60 010 219.34'/%3E%3Ccircle transform='rotate(-45)' cx='-166.78' cy='866.02' r='190'/%3E%3Cpath d='M304.44 730.3a190 155.13 0 01190-155.13 190 155.13 0 01190 155.13'/%3E%3Cpath d='M571.5 557.67a134.35 76.83 0 0151.07 86.04 134.35 76.83 0 01-128.13 53.73 134.35 76.83 0 01-128.14-53.73 134.35 76.83 0 0151.08-86.04M604.49 884.07a134.35 76.83 0 01-110.05 32.76 134.35 76.83 0 01-110.06-32.76'/%3E%3C/g%3E%3C/svg%3E")`
 		};
-		const headerFlagHolder = '.sc-globalHeader-loginInfo, .gh-account';
+		const headerFlagHolder = '.sc-globalHeader-loginInfo, .gh-account, #dataBases.dataBases.caption';
 		const exm91Button = 'div[data-sc-id=LanguageSwitcher] button .sc-dropdownbutton-text';
 		const exm93Button = 'exm-language-switcher > sc-dropdown > button';
 		this.init = function() {
@@ -509,6 +519,17 @@
 				langHiddenObserver.observe(document.querySelector(exm93Button).parentElement, {characterData: true, childList: true, subtree: true});
 			} else if (exm) {
 				document.querySelector('#showLang').innerHTML = 'N/A';
+			} else if (dbBrowser) {
+				let curLang = nullConditional(q('a.DatabaseLinkSelected'),
+					q => q[0],
+					a => a.href,
+					h => h.match(/lang=([\w-]+)/),
+					m => m[1]);
+				document.querySelector('#showLang').innerHTML = curLang;
+				rightCol.style.height = '';
+				rightCol.style.backgroundSize = '54px 100%';
+				rightCol.style.backgroundPositionX = '50%';
+				rightCol.style.backgroundImage = flags[curLang];
 			}
 		}
 		let langHiddenObserver = new MutationObserver(updateLang);
@@ -776,6 +797,9 @@
 		this.getContainer = function() {
 			let qaContainer = document.createElement('div');
 				qaContainer.id = 'QuickAccess';
+			if (dbBrowser) {
+				qaContainer.style.float = 'left';
+			}
 			return qaContainer;
 		}
 		this.render = function(sc10) {
@@ -1571,6 +1595,13 @@
 		let locMatch = location.search.match(/database=(\w+)/);
 		if (ribbon && locMatch !== null) {
 			return locMatch[1];
+		}
+		if (dbBrowser) {
+			return nullConditional(q('a.DatabaseLinkSelected'),
+					q => q[0],
+					a => a.href,
+					h => h.match(/db=(\w+)/),
+					m => m[1]);
 		}
 		let meta = document.querySelector('meta[data-sc-name=sitecoreContentDatabase]');
 		if (meta !== null) {
