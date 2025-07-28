@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Asontu's Sitecore nifties
 // @namespace    https://asontu.github.io/
-// @version      8.4.1
+// @version      8.4.2
 // @description  Add environment info to Sitecore header, extend functionality
 // @author       Herman Scheele
 // @grant        GM_setValue
@@ -150,6 +150,9 @@
 		}
 		if (formsEditor) {
 			formsContentEditorLinks.init();
+		}
+		if (dbBrowser) {
+			dbBrowserTweaks.init();
 		}
 	}
 
@@ -988,6 +991,40 @@
 				kickUserButton.querySelector('p').innerText = 'View logged in users and kick them out';
 
 			buttonToClone.parentElement.appendChild(kickUserButton);
+		}
+	})();
+
+	var dbBrowserTweaks = new (function() {
+		this.init = function() {
+			let itemDetails = nullConditional(q('a.DatabaseLinkSelected'),
+					q => q[0],
+					a => a.href,
+					h => h.match(/^(?=.*?db=(\w+))(?=.*?lang=([\w-]+))(?=.*?id=([0-9A-F{}-]+))/),
+					m => [m[1], m[2], m[3]]);
+			if (itemDetails === null) {
+				return;
+			}
+			let [itemDb, itemLang, itemId] = itemDetails;
+			let contentEditorButton = document.createElement('button');
+			    contentEditorButton.type = 'button';
+			    contentEditorButton.class = 'Toolbutton';
+				contentEditorButton.style.fontSize = '8pt';
+				contentEditorButton.innerHTML = `Open in Content Editor <img src="${colorizedPencil}" height="12" style="vertical-align:middle">`;
+				contentEditorButton.onclick = () => top.location.href = `/sitecore/shell/Applications/Content%20Editor.aspx?sc_bw=1&${generateUrlQuery({
+					guidTo: itemId,
+					langTo: itemLang
+				})}`;
+			let lastButton = document.querySelector('.ButtonBar input:last-child');
+			lastButton.parentElement.appendChild(contentEditorButton);
+			if (document.querySelector('a.ItemPathTemplate[href*="6ABEE1F2-4AB4-47F0-AD8B-BDB36F37F64C"]') !== null) {
+				let formsButton = contentEditorButton.cloneNode(false);
+					formsButton.innerHTML = 'Edit in Sitecore Forms';
+					formsButton.onclick = () => top.location.href = `/sitecore/client/Applications/FormsBuilder/Pages/FormDesigner?sc_formmode=edit&${generateUrlQuery({
+						formId: itemId,
+						lang: itemLang
+					})}`;
+				lastButton.parentElement.appendChild(formsButton);
+			}
 		}
 	})();
 
