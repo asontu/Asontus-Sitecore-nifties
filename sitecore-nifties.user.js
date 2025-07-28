@@ -1179,46 +1179,68 @@
 			if (!lastResponse.length) {
 				return;
 			}
-			for (let i = 0; i < lastResponse.length; i++) {
-				formDetailObserver.disconnect();
-				let query = {};
+			let contentEditorQuery = {};
+			let dbBrowserQuery = {
+				db : findDb()
+			};
 				let langLabel = document.querySelector('.sc-listcontrol-icon.selected .sc-listcontrol-icon-description-row2');
 				if (langLabel) {
-					query['langTo'] = langLabel.innerText;
+				contentEditorQuery.langTo = langLabel.innerText;
+				dbBrowserQuery.lang = langLabel.innerText;
 				}
+			for (let i = 0; i < lastResponse.length; i++) {
+				formDetailObserver.disconnect();
 				if (i === 0) {
-					query['guidTo'] = lastResponse[i].formId;
+					contentEditorQuery.guidTo = lastResponse[i].formId;
+					dbBrowserQuery.id = lastResponse[i].formId;
 					let pathSpan = q('[data-sc-id="LocationValue"]')[0];
 					let pathParent = pathSpan.parentNode;
-					let oldLink = document.querySelector('#formIdLink');
+					let oldLink = document.querySelector('#formIdContentEditorLink');
 					if (oldLink) {
 						pathParent.removeChild(oldLink);
+						pathParent.removeChild(document.querySelector('#formIdDbBrowserLink'));
 					} else {
 						pathParent.style.position = 'relative';
 					}
 					let formPath = pathSpan.innerText.trim();
 					let formName = q('.sc-listcontrol-icon.selected .sc-listcontrol-icon-description a')[0].title;
 					var a = document.createElement('a');
-						a.id = 'formIdLink';
+						a.id = 'formIdContentEditorLink';
 						a.innerHTML = `<img src="${colorizedPencil}" height="16" width="16" />`;
-						a.setAttribute('href', `/sitecore/shell/Applications/Content%20Editor.aspx?sc_bw=1&${generateUrlQuery(query)}`);
+						a.setAttribute('href', `/sitecore/shell/Applications/Content%20Editor.aspx?sc_bw=1&${generateUrlQuery(contentEditorQuery)}`);
 						a.onclick = function(e) { e.stopPropagation(); };
 						a.setAttribute('title', `Open [${formPath}/${formName}] in the Content Editor`);
 						a.style.position = 'absolute';
-						a.style.left = '-1em';
+						a.style.left = '-3em';
 					pathParent.prepend(a);
+					var b = a.cloneNode(true);
+						b.id = 'formIdDbBrowserLink';
+						b.querySelector('img').src = '/-/icon/Applications/16x16/gear.png';
+						b.setAttribute('href', `/sitecore/admin/dbbrowser.aspx?${generateUrlQuery(dbBrowserQuery)}`);
+						b.setAttribute('title', `Open [${formPath}/${formName}] in the dbBrowser`);
+						b.style.left = '-1em';
+					pathParent.prepend(b);
 				}
 				let par = searchMutationListFor(mutationList, 'p[title="'+lastResponse[i].name+' '+lastResponse[i].path+'"]');
 				if (!par) {
 					continue;
 				}
-				query['guidTo'] = lastResponse[i].id;
+				contentEditorQuery.guidTo = lastResponse[i].id;
 				a = a.cloneNode(true);
-					a.setAttribute('href', `/sitecore/shell/Applications/Content%20Editor.aspx?sc_bw=1&${generateUrlQuery(query)}`);
+					a.removeAttribute('id');
+					a.setAttribute('href', `/sitecore/shell/Applications/Content%20Editor.aspx?sc_bw=1&${generateUrlQuery(contentEditorQuery)}`);
 					a.setAttribute('title', `Open [${lastResponse[i].path}] in the Content Editor`);
 					a.style.left = '';
 					a.style.right = '6em';
 				par[0].appendChild(a);
+				dbBrowserQuery.id = lastResponse[i].id;
+				b = b.cloneNode(true);
+					b.removeAttribute('id');
+					b.setAttribute('href', `/sitecore/admin/dbbrowser.aspx?${generateUrlQuery(dbBrowserQuery)}`);
+					b.setAttribute('title', `Open [${lastResponse[i].path}] in the dbBrowser`);
+					b.style.left = '';
+					b.style.right = '4em';
+				par[0].appendChild(b);
 			}
 			formDetailObserver.observe(document.querySelector('div[data-sc-id=LinksListControl] .sc-listcontrol-content'), {attributes:false, childList: true, subtree: true});
 		});
