@@ -1225,22 +1225,22 @@
 				if (!par) {
 					continue;
 				}
-				contentEditorQuery.guidTo = lastResponse[i].id;
-				a = a.cloneNode(true);
-					a.removeAttribute('id');
-					a.setAttribute('href', `/sitecore/shell/Applications/Content%20Editor.aspx?sc_bw=1&${generateUrlQuery(contentEditorQuery)}`);
-					a.setAttribute('title', `Open [${lastResponse[i].path}] in the Content Editor`);
-					a.style.left = '';
-					a.style.right = '6em';
-				par[0].appendChild(a);
 				dbBrowserQuery.id = lastResponse[i].id;
 				b = b.cloneNode(true);
 					b.removeAttribute('id');
+					b.removeAttribute('style');
 					b.setAttribute('href', `/sitecore/admin/dbbrowser.aspx?${generateUrlQuery(dbBrowserQuery)}`);
 					b.setAttribute('title', `Open [${lastResponse[i].path}] in the dbBrowser`);
-					b.style.left = '';
-					b.style.right = '4em';
-				par[0].appendChild(b);
+				par[0].prepend(document.createTextNode(' '));
+				par[0].prepend(b);
+				contentEditorQuery.guidTo = lastResponse[i].id;
+				a = a.cloneNode(true);
+					a.removeAttribute('id');
+					a.removeAttribute('style');
+					a.setAttribute('href', `/sitecore/shell/Applications/Content%20Editor.aspx?sc_bw=1&${generateUrlQuery(contentEditorQuery)}`);
+					a.setAttribute('title', `Open [${lastResponse[i].path}] in the Content Editor`);
+				par[0].prepend(document.createTextNode(' '));
+				par[0].prepend(a);
 			}
 			formDetailObserver.observe(document.querySelector('div[data-sc-id=LinksListControl] .sc-listcontrol-content'), {attributes:false, childList: true, subtree: true});
 		});
