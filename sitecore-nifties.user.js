@@ -1016,7 +1016,7 @@
 				})}`;
 			let lastButton = document.querySelector('.ButtonBar input:last-child');
 			lastButton.parentElement.appendChild(contentEditorButton);
-			if (document.querySelector('a.ItemPathTemplate[href*="6ABEE1F2-4AB4-47F0-AD8B-BDB36F37F64C"]') !== null) {
+			if (document.querySelector(`a.ItemPathTemplate[href*="${formTemplateId}"]`) !== null) {
 				let formsButton = contentEditorButton.cloneNode(false);
 					formsButton.innerHTML = 'Edit in Sitecore Forms';
 					formsButton.onclick = () => top.location.href = `/sitecore/client/Applications/FormsBuilder/Pages/FormDesigner?sc_formmode=edit&${generateUrlQuery({
@@ -1028,6 +1028,7 @@
 		}
 	})();
 
+	const formTemplateId = '{6ABEE1F2-4AB4-47F0-AD8B-BDB36F37F64C}';
 	var contentTreeTweaks = new (function() {
 		let wasScrolledToBottom = false;
 		this.init = function() {
@@ -1113,7 +1114,7 @@
 				nameCell.appendChild(dbBrowserLink);
 			}
 			let templateId = document.querySelector('.scEditorHeaderQuickInfoInputID').value;
-			if (templateId === '{6ABEE1F2-4AB4-47F0-AD8B-BDB36F37F64C}') { // Form
+			if (templateId === formTemplateId) {
 				let formsLink = document.createElement('a');
 					formsLink.setAttribute('href', `/sitecore/client/Applications/FormsBuilder/Pages/FormDesigner?sc_formmode=edit&formId=${curItem}&lang=${curLang}`);
 					formsLink.innerHTML = '(Edit in Sitecore Forms &UpperRightArrow;)';
@@ -1217,7 +1218,7 @@
 						b.id = 'formIdDbBrowserLink';
 						b.querySelector('img').src = '/-/icon/Applications/16x16/gear.png';
 						b.setAttribute('href', `/sitecore/admin/dbbrowser.aspx?${generateUrlQuery(dbBrowserQuery)}`);
-						b.setAttribute('title', `Open [${formPath}/${formName}] in the dbBrowser`);
+						b.setAttribute('title', `Open [${formPath}/${formName}] in the DB Browser`);
 						b.style.left = '-1em';
 					pathParent.prepend(b);
 				}
@@ -1230,7 +1231,7 @@
 					b.removeAttribute('id');
 					b.removeAttribute('style');
 					b.setAttribute('href', `/sitecore/admin/dbbrowser.aspx?${generateUrlQuery(dbBrowserQuery)}`);
-					b.setAttribute('title', `Open [${lastResponse[i].path}] in the dbBrowser`);
+					b.setAttribute('title', `Open [${lastResponse[i].path}] in the DB Browser`);
 				par[0].prepend(document.createTextNode(' '));
 				par[0].prepend(b);
 				contentEditorQuery.guidTo = lastResponse[i].id;
